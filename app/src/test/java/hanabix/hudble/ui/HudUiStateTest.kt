@@ -1,4 +1,4 @@
-package zhongl.huf.ui
+package hanabix.hudble.ui
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

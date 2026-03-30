@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "zhongl.huf"
+    namespace = "hanabix.hudble"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "zhongl.huf"
+        applicationId = "hanabix.hudble"
         minSdk = 29
         targetSdk = 36
         versionCode = 1

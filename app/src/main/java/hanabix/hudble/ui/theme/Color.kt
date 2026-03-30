@@ -1,4 +1,4 @@
-package zhongl.huf.ui.theme
+package hanabix.hudble.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

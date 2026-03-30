@@ -1,4 +1,4 @@
-package zhongl.huf.ui
+package hanabix.hudble.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -30,10 +30,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import zhongl.huf.R
-import zhongl.huf.ui.theme.HeadUpFitnessTheme
-import zhongl.huf.ui.theme.HudBlack
-import zhongl.huf.ui.theme.HudGreen
+import hanabix.hudble.R
+import hanabix.hudble.ui.theme.HeadUpFitnessTheme
+import hanabix.hudble.ui.theme.HudBlack
+import hanabix.hudble.ui.theme.HudGreen
 
 data class HudMetric(
     val label: String,

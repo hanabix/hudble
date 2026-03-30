@@ -1,4 +1,4 @@
-package zhongl.huf
+package hanabix.hudble
 
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createAndroidComposeRule

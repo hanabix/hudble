@@ -1,12 +1,12 @@
-package zhongl.huf
+package hanabix.hudble
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import zhongl.huf.ui.HudScreen
-import zhongl.huf.ui.HudUiState
-import zhongl.huf.ui.theme.HeadUpFitnessTheme
+import hanabix.hudble.ui.HudScreen
+import hanabix.hudble.ui.HudUiState
+import hanabix.hudble.ui.theme.HeadUpFitnessTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
