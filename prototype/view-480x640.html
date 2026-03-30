@@ -37,22 +37,22 @@
                 background: var(--bg);
                 color: var(--hud-green);
                 overflow: hidden;
+                font-size: 16px;
+                line-height: 22px;
             }
 
-            .glow {
-                color: var(--hud-green);
-                filter: none;
-            }
-
-            .metric {
+            .metric,
+            .pace,
+            .cadence {
                 position: absolute;
-                top: 62px;
                 left: 34px;
                 display: flex;
                 align-items: center;
                 gap: 4px;
-                font-size: 16px;
-                line-height: 22px;
+            }
+
+            .metric {
+                top: 62px;
             }
 
             .heart-value {
@@ -81,33 +81,17 @@
             }
 
             .pace {
-                position: absolute;
                 top: 30px;
-                left: 34px;
-                display: flex;
-                align-items: center;
-                gap: 4px;
-                font-size: 16px;
-                line-height: 22px;
             }
 
             .cadence {
-                position: absolute;
                 top: 94px;
-                left: 34px;
-                display: flex;
-                align-items: center;
-                gap: 4px;
-                font-size: 16px;
-                line-height: 22px;
             }
 
             .material-symbols-rounded {
                 font-family: "Material Symbols Rounded";
                 font-weight: normal;
                 font-style: normal;
-                font-size: 16px;
-                line-height: 22px;
                 letter-spacing: normal;
                 text-transform: none;
                 display: inline-block;
@@ -122,72 +106,42 @@
                     "opsz" 24;
             }
 
+            .device,
+            .time,
+            .battery {
+                position: absolute;
+                bottom: 34px;
+            }
+
             .device {
-                position: absolute;
                 left: 50%;
-                bottom: 34px;
                 transform: translateX(-50%);
-                font-size: 16px;
-                line-height: 22px;
             }
 
-            .distance {
-                position: absolute;
-                top: 30px;
-                right: 34px;
-                font-size: 16px;
-                line-height: 22px;
-                text-align: right;
-            }
-
-            .duration {
-                position: absolute;
-                top: 62px;
-                right: 34px;
-                font-size: 16px;
-                line-height: 22px;
-                text-align: right;
-            }
-
-            .time {
-                position: absolute;
-                left: 34px;
-                bottom: 34px;
-                font-size: 16px;
-                line-height: 22px;
-            }
-
+            .distance,
+            .duration,
             .battery {
                 position: absolute;
                 right: 34px;
-                bottom: 34px;
-                font-size: 16px;
-                line-height: 22px;
                 text-align: right;
             }
 
-            .line {
-                position: absolute;
-                top: 59px;
-                height: 1.2px;
-                background: #40FF5E;
-                filter: none;
+            .distance {
+                top: 30px;
             }
 
-            .line-left {
+            .duration {
+                top: 62px;
+            }
+
+            .time {
                 left: 34px;
-                width: 84px;
-            }
-
-            .line-right {
-                right: 34px;
-                width: 84px;
             }
         </style>
     </head>
     <body>
         <main class="screen">
-            <div class="metric glow">
+            <div class="metric">
                 <span class="material-symbols-rounded" aria-hidden="true"
                     >cardiology</span
                 >
@@ -197,7 +151,7 @@
                 </span>
             </div>
 
-            <div class="pace glow">
+            <div class="pace">
                 <span class="material-symbols-rounded" aria-hidden="true"
                     >timer</span
                 >
@@ -206,7 +160,7 @@
                     <span class="reading-unit">/km</span>
                 </span>
             </div>
-            <div class="cadence glow">
+            <div class="cadence">
                 <span class="material-symbols-rounded" aria-hidden="true"
                     >steps</span
                 >
@@ -215,11 +169,11 @@
                     <span class="reading-unit">spm</span>
                 </span>
             </div>
-            <div class="distance glow">5.43 km</div>
-            <div class="duration glow">00:36:18</div>
-            <div class="time glow">15:47:23</div>
-            <div class="device glow">Enduro 2</div>
-            <div class="battery glow">87%</div>
+            <div class="distance">5.43 km</div>
+            <div class="duration">00:36:18</div>
+            <div class="time">15:47:23</div>
+            <div class="device">Enduro 2</div>
+            <div class="battery">87%</div>
         </main>
     </body>
 </html>
