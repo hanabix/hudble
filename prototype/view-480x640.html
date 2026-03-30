@@ -3,14 +3,14 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>AI Glasses Prototype</title>
+        <title>HeadUp Fitness Prototype</title>
         <link
             rel="stylesheet"
             href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0"
         />
         <style>
             :root {
-                --hud-green: #00ff55;
+                --hud-green: #40FF5E;
                 --bg: #000000;
             }
 
@@ -26,6 +26,8 @@
                 background: #111111;
                 font-family:
                     "Andale Mono", "SFMono-Regular", "Consolas", monospace;
+                font-size: 16px;
+                line-height: 22px;
             }
 
             .screen {
@@ -39,7 +41,7 @@
 
             .glow {
                 color: var(--hud-green);
-                filter: drop-shadow(0 0 3px rgba(0, 255, 85, 0.75));
+                filter: none;
             }
 
             .metric {
@@ -49,8 +51,8 @@
                 display: flex;
                 align-items: center;
                 gap: 4px;
-                font-size: 20px;
-                line-height: 1;
+                font-size: 16px;
+                line-height: 22px;
             }
 
             .heart-value {
@@ -72,8 +74,8 @@
             }
 
             svg {
-                width: 24px;
-                height: 24px;
+                width: 20px;
+                height: 20px;
                 fill: var(--hud-green);
                 flex: 0 0 auto;
             }
@@ -85,8 +87,8 @@
                 display: flex;
                 align-items: center;
                 gap: 4px;
-                font-size: 20px;
-                line-height: 1;
+                font-size: 16px;
+                line-height: 22px;
             }
 
             .cadence {
@@ -96,16 +98,16 @@
                 display: flex;
                 align-items: center;
                 gap: 4px;
-                font-size: 20px;
-                line-height: 1;
+                font-size: 16px;
+                line-height: 22px;
             }
 
             .material-symbols-rounded {
                 font-family: "Material Symbols Rounded";
                 font-weight: normal;
                 font-style: normal;
-                font-size: 24px;
-                line-height: 1;
+                font-size: 16px;
+                line-height: 22px;
                 letter-spacing: normal;
                 text-transform: none;
                 display: inline-block;
@@ -125,16 +127,16 @@
                 left: 50%;
                 bottom: 34px;
                 transform: translateX(-50%);
-                font-size: 20px;
-                line-height: 1;
+                font-size: 16px;
+                line-height: 22px;
             }
 
             .distance {
                 position: absolute;
                 top: 30px;
                 right: 34px;
-                font-size: 20px;
-                line-height: 1;
+                font-size: 16px;
+                line-height: 22px;
                 text-align: right;
             }
 
@@ -142,8 +144,8 @@
                 position: absolute;
                 top: 62px;
                 right: 34px;
-                font-size: 20px;
-                line-height: 1;
+                font-size: 16px;
+                line-height: 22px;
                 text-align: right;
             }
 
@@ -151,16 +153,16 @@
                 position: absolute;
                 left: 34px;
                 bottom: 34px;
-                font-size: 20px;
-                line-height: 1;
+                font-size: 16px;
+                line-height: 22px;
             }
 
             .battery {
                 position: absolute;
                 right: 34px;
                 bottom: 34px;
-                font-size: 20px;
-                line-height: 1;
+                font-size: 16px;
+                line-height: 22px;
                 text-align: right;
             }
 
@@ -168,8 +170,8 @@
                 position: absolute;
                 top: 59px;
                 height: 1.2px;
-                background: rgba(0, 255, 85, 0.75);
-                filter: drop-shadow(0 0 3px rgba(0, 255, 85, 0.6));
+                background: #40FF5E;
+                filter: none;
             }
 
             .line-left {
