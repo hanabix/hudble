@@ -8,5 +8,5 @@
 
 ## 工程约束
 
-- 纯原生 UI 渲染，禁止使用 WebView 
-
+- 纯原生 UI 渲染，禁止使用 WebView ；
+- 默认情况 UI 的实现应优先遵循 [Rokid YodaOS-Sprite 设计规范](ui-spec.md) 的要求；
