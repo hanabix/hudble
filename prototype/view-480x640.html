@@ -45,14 +45,15 @@
             .pace,
             .cadence {
                 position: absolute;
-                left: 34px;
+                left: 0;
                 display: flex;
                 align-items: center;
                 gap: 4px;
+                width: 240px;
             }
 
             .metric {
-                top: 62px;
+                top: 224px;
             }
 
             .heart-value {
@@ -63,7 +64,7 @@
 
             .reading-value {
                 display: inline-block;
-                width: 56px;
+                width: 72px;
                 text-align: right;
             }
 
@@ -81,11 +82,11 @@
             }
 
             .pace {
-                top: 30px;
+                top: 184px;
             }
 
             .cadence {
-                top: 94px;
+                top: 264px;
             }
 
             .material-symbols-rounded {
@@ -106,36 +107,43 @@
                     "opsz" 24;
             }
 
-            .device,
-            .time,
-            .battery {
+            .footer {
                 position: absolute;
-                bottom: 34px;
+                left: 0;
+                right: 0;
+                top: 520px;
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                align-items: center;
             }
 
             .device {
-                left: 50%;
-                transform: translateX(-50%);
+                justify-self: center;
             }
 
             .distance,
             .duration,
             .battery {
                 position: absolute;
-                right: 34px;
+                right: 0;
                 text-align: right;
+                width: 240px;
             }
 
             .distance {
-                top: 30px;
+                top: 184px;
             }
 
             .duration {
-                top: 62px;
+                top: 224px;
             }
 
             .time {
-                left: 34px;
+                justify-self: start;
+            }
+
+            .battery {
+                justify-self: end;
             }
         </style>
     </head>
@@ -171,9 +179,11 @@
             </div>
             <div class="distance">5.43 km</div>
             <div class="duration">00:36:18</div>
-            <div class="time">15:47:23</div>
-            <div class="device">Enduro 2</div>
-            <div class="battery">87%</div>
+            <div class="footer">
+                <div class="time">15:47:23</div>
+                <div class="device">Enduro 2</div>
+                <div class="battery">87%</div>
+            </div>
         </main>
     </body>
 </html>
