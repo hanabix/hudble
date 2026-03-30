@@ -10,7 +10,7 @@
         />
         <style>
             :root {
-                --hud-green: #40FF5E;
+                --hud-green: #40ff5e;
                 --bg: #000000;
             }
 
@@ -41,23 +41,23 @@
                 line-height: 22px;
             }
 
-            .metric,
-            .pace,
-            .cadence {
+            .stats-row {
                 position: absolute;
                 left: 0;
+                right: 0;
+                top: 224px;
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                flex-wrap: nowrap;
+            }
+
+            .stat {
                 display: flex;
                 align-items: center;
                 gap: 4px;
-                width: 240px;
-            }
-
-            .metric {
-                top: 224px;
-            }
-
-            .heart-value {
-                display: inline-block;
+                flex: 0 0 auto;
+                white-space: nowrap;
             }
 
             .reading-value {
@@ -66,19 +66,25 @@
                 text-align: left;
             }
 
+            .pace .reading-value {
+                width: 48px;
+            }
+
+            .metric .reading-value,
+            .cadence .reading-value {
+                width: 24px;
+            }
+
+            .distance .reading-value {
+                width: 64px;
+                white-space: nowrap;
+            }
+
             svg {
                 width: 20px;
                 height: 20px;
                 fill: var(--hud-green);
                 flex: 0 0 auto;
-            }
-
-            .pace {
-                top: 184px;
-            }
-
-            .cadence {
-                top: 264px;
             }
 
             .material-symbols-rounded {
@@ -113,23 +119,6 @@
                 justify-self: center;
             }
 
-            .distance,
-            .duration,
-            .battery {
-                position: absolute;
-                right: 0;
-                text-align: right;
-                width: 240px;
-            }
-
-            .distance {
-                top: 184px;
-            }
-
-            .duration {
-                top: 224px;
-            }
-
             .time {
                 justify-self: start;
             }
@@ -141,35 +130,34 @@
     </head>
     <body>
         <main class="screen">
-            <div class="metric">
-                <span class="material-symbols-rounded" aria-hidden="true"
-                    >cardiology</span
-                >
-                <span class="heart-value">
-                    <span class="reading-value">156</span>
-                </span>
-            </div>
-
-            <div class="pace">
-                <span class="material-symbols-rounded" aria-hidden="true"
-                    >timer</span
-                >
-                <span class="heart-value">
+            <div class="stats-row">
+                <div class="stat pace">
+                    <span class="material-symbols-rounded" aria-hidden="true"
+                        >timer</span
+                    >
                     <span class="reading-value">6'21"</span>
-                </span>
-            </div>
-            <div class="cadence">
-                <span class="material-symbols-rounded" aria-hidden="true"
-                    >steps</span
-                >
-                <span class="heart-value">
+                </div>
+                <div class="stat metric">
+                    <span class="material-symbols-rounded" aria-hidden="true"
+                        >cardiology</span
+                    >
+                    <span class="reading-value">156</span>
+                </div>
+                <div class="stat cadence">
+                    <span class="material-symbols-rounded" aria-hidden="true"
+                        >steps</span
+                    >
                     <span class="reading-value">178</span>
-                </span>
+                </div>
+                <div class="stat distance">
+                    <span class="material-symbols-rounded" aria-hidden="true"
+                        >distance</span
+                    >
+                    <span class="reading-value">5.43km</span>
+                </div>
             </div>
-            <div class="distance">5.43 km</div>
-            <div class="duration">00:36:18</div>
             <div class="footer">
-                <div class="time">15:47:23</div>
+                <div class="time">15:47</div>
                 <div class="device">Enduro 2</div>
                 <div class="battery">87%</div>
             </div>
