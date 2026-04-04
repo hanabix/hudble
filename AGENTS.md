@@ -11,6 +11,8 @@
 - 纯原生 UI 渲染，禁止使用 WebView ；
 - 默认情况 UI 的实现应优先遵循 [Rokid YodaOS-Sprite 设计规范](docs/ui-spec.md) 的要求；
 - 在没有可用设备的时候，禁止执行 `connectedDebugAndroidTest` 测试；
+- 代码注解优先用简短的英文；
+- UI 上的文本优先用英文；
 
 ## 关于电量
 
