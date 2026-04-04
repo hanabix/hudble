@@ -6,87 +6,28 @@
         <title>HeadUp Fitness Prototype</title>
         <link
             rel="stylesheet"
-            href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0"
+            href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&family=Droid+Sans+Mono&display=swap"
         />
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            'hud-green': '#40ff5e',
+                            'hud-bg': '#000000',
+                        },
+                        fontFamily: {
+                            mono: [
+                                '"Droid Sans Mono"',
+                                'monospace',
+                            ],
+                        },
+                    },
+                },
+            }
+        </script>
         <style>
-            :root {
-                --hud-green: #40ff5e;
-                --bg: #000000;
-            }
-
-            * {
-                box-sizing: border-box;
-            }
-
-            body {
-                margin: 0;
-                min-height: 100vh;
-                display: grid;
-                place-items: center;
-                background: #111111;
-                font-family:
-                    "Andale Mono", "SFMono-Regular", "Consolas", monospace;
-                font-size: 16px;
-                line-height: 22px;
-            }
-
-            .screen {
-                position: relative;
-                width: 480px;
-                height: 640px;
-                background: var(--bg);
-                color: var(--hud-green);
-                overflow: hidden;
-                font-size: 16px;
-                line-height: 22px;
-            }
-
-            .stats-row {
-                position: absolute;
-                left: 0;
-                right: 0;
-                top: 224px;
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                flex-wrap: nowrap;
-            }
-
-            .stat {
-                display: flex;
-                align-items: center;
-                gap: 4px;
-                flex: 0 0 auto;
-                white-space: nowrap;
-            }
-
-            .reading-value {
-                display: inline-block;
-                width: auto;
-                text-align: left;
-            }
-
-            .pace .reading-value {
-                width: 48px;
-            }
-
-            .metric .reading-value,
-            .cadence .reading-value {
-                width: 24px;
-            }
-
-            .distance .reading-value {
-                width: 64px;
-                white-space: nowrap;
-            }
-
-            svg {
-                width: 20px;
-                height: 20px;
-                fill: var(--hud-green);
-                flex: 0 0 auto;
-            }
-
             .material-symbols-rounded {
                 font-family: "Material Symbols Rounded";
                 font-weight: normal;
@@ -104,62 +45,28 @@
                     "GRAD" 0,
                     "opsz" 24;
             }
-
-            .footer {
-                position: absolute;
-                left: 0;
-                right: 0;
-                top: 520px;
-                display: grid;
-                grid-template-columns: 1fr 1fr 1fr;
-                align-items: center;
-            }
-
-            .device {
-                justify-self: center;
-            }
-
-            .time {
-                justify-self: start;
-            }
-
-            .battery {
-                justify-self: end;
-            }
         </style>
     </head>
-    <body>
-        <main class="screen">
-            <div class="stats-row">
-                <div class="stat pace">
-                    <span class="material-symbols-rounded" aria-hidden="true"
-                        >timer</span
-                    >
-                    <span class="reading-value">6'21"</span>
+    <body class="m-0 min-h-screen grid place-items-center bg-[#111111] font-mono text-base leading-[22px]">
+        <main class="relative w-[480px] h-[640px] bg-hud-bg text-hud-green overflow-hidden text-base leading-[22px]">
+            <div class="absolute inset-x-0 top-[224px] flex justify-between items-start flex-nowrap">
+                <div class="flex items-center gap-2 flex-1 justify-start whitespace-nowrap">
+                    <span class="material-symbols-rounded" aria-hidden="true">timer</span>
+                    <span class="inline-block min-w-[48px] text-center">6'21"</span>
                 </div>
-                <div class="stat metric">
-                    <span class="material-symbols-rounded" aria-hidden="true"
-                        >cardiology</span
-                    >
-                    <span class="reading-value">156</span>
+                <div class="flex items-center gap-2 flex-1 justify-center whitespace-nowrap">
+                    <span class="material-symbols-rounded" aria-hidden="true">cardiology</span>
+                    <span class="inline-block min-w-[48px] text-center">156</span>
                 </div>
-                <div class="stat cadence">
-                    <span class="material-symbols-rounded" aria-hidden="true"
-                        >steps</span
-                    >
-                    <span class="reading-value">178</span>
-                </div>
-                <div class="stat distance">
-                    <span class="material-symbols-rounded" aria-hidden="true"
-                        >distance</span
-                    >
-                    <span class="reading-value">5.43km</span>
+                <div class="flex items-center gap-2 flex-1 justify-end whitespace-nowrap">
+                    <span class="material-symbols-rounded" aria-hidden="true">steps</span>
+                    <span class="inline-block min-w-[48px] text-center">178</span>
                 </div>
             </div>
-            <div class="footer">
-                <div class="time">15:47</div>
-                <div class="device">Enduro 2</div>
-                <div class="battery">87%</div>
+            <div class="absolute inset-x-0 top-[520px] grid grid-cols-3 items-center">
+                <div class="justify-self-start">15:47</div>
+                <div class="justify-self-center">Enduro 2</div>
+                <div class="justify-self-end">87%</div>
             </div>
         </main>
     </body>
