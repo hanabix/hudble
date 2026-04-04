@@ -33,15 +33,9 @@ class HudViewModel(
 
     private fun observeBatteryLevel() {
         viewModelScope.launch {
-            deviceBatteryObserver.observeBatteryLevel().collect { batteryLevel ->
-                updateBatteryLevel(batteryLevel)
+            deviceBatteryObserver.observe().collect { level ->
+                _uiState.update { it.copy(batteryLevel = level) }
             }
-        }
-    }
-
-    private fun updateBatteryLevel(level: Int) {
-        _uiState.update { currentState ->
-            currentState.copy(batteryLevel = "$level%")
         }
     }
 }

@@ -11,24 +11,13 @@ import kotlinx.coroutines.flow.callbackFlow
 class DeviceBatteryObserver(
     private val context: Context,
 ) {
-    fun getCurrentBatteryLevel(): Int {
-        val batteryStatus: Intent? = IntentFilter(Intent.ACTION_BATTERY_CHANGED).let { filter ->
-            context.registerReceiver(null, filter)
-        }
-
-        val level: Int = batteryStatus?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
-        val scale: Int = batteryStatus?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
-
-        return BatteryLevelCalculator.calculate(level, scale)
-    }
-
-    fun observeBatteryLevel(): Flow<Int> = callbackFlow {
+    fun observe(): Flow<String> = callbackFlow {
         val receiver = object : android.content.BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 val level = intent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
                 val scale = intent?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
 
-                trySend(BatteryLevelCalculator.calculate(level, scale))
+                trySend("${BatteryLevelCalculator.calculate(level, scale)}%")
             }
         }
 

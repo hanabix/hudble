@@ -7,6 +7,8 @@ import android.os.BatteryManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -15,23 +17,16 @@ import org.junit.runner.RunWith
 class DeviceBatteryObserverTest {
 
     @Test
-    fun getCurrentBatteryLevel_returnsCorrectValue() {
+    fun observe_emitsCorrectBatteryLevel() = runTest {
         val mockContext = mockk<Context>()
         val mockIntent = mockk<Intent>()
         every { mockIntent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) } returns 87
         every { mockIntent.getIntExtra(BatteryManager.EXTRA_SCALE, -1) } returns 100
-        every { mockContext.registerReceiver(null, any<IntentFilter>()) } returns mockIntent
+        every { mockContext.registerReceiver(any(), any<IntentFilter>()) } returns mockIntent
 
         val observer = DeviceBatteryObserver(mockContext)
-        assertEquals(87, observer.getCurrentBatteryLevel())
-    }
+        val result = observer.observe().first()
 
-    @Test
-    fun getCurrentBatteryLevel_returnsZeroForInvalidValues() {
-        val mockContext = mockk<Context>()
-        every { mockContext.registerReceiver(null, any<IntentFilter>()) } returns null
-
-        val observer = DeviceBatteryObserver(mockContext)
-        assertEquals(0, observer.getCurrentBatteryLevel())
+        assertEquals("87%", result)
     }
 }
