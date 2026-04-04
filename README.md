@@ -26,6 +26,16 @@ UI效果原型参见：[view-480x640](prototype/view-480x640.html)
 - [ ] [Cycling Power Service](https://www.bluetooth.com/specifications/specs/cycling-power-service/)
 
 
+## 连接设备
+
+启动设备扫描（30秒超时），并尝试连接第一个：
+
+1. 同时具备 HRS 和 RSCS 的设备，并显示设备名；若无，
+1. 仅支持 RSCS 的设备，并显示设备名；若无
+1. 仅支持 HRS 的设备，并显示设备名；若无
+1. 显示 `Tap to rescan`。
+
+
 ## 已知局限
 
 - 仅支持 RSCS 必要测量数据，即 **速度** 和 **步频** 
