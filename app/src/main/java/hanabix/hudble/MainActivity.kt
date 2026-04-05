@@ -17,6 +17,7 @@ import androidx.lifecycle.ViewModelProvider
 import hanabix.hudble.data.BluetoothScanner
 import hanabix.hudble.data.Clock
 import hanabix.hudble.data.DeviceStatus
+import hanabix.hudble.data.GattClient
 import hanabix.hudble.data.GattServices
 import hanabix.hudble.data.HostBatteryObserver
 import hanabix.hudble.data.DeviceStatus.Scanning
@@ -32,12 +33,13 @@ class MainActivity : ComponentActivity() {
             listOf(GattServices.HEART_RATE, GattServices.RUNNING_SPEED_CADENCE),
         )
     }
+    private val gattClient by lazy { GattClient(applicationContext) }
 
     private val viewModel by viewModels<DeviceViewModel> {
         object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                DeviceViewModel(bluetoothScanner) as T
+                DeviceViewModel(bluetoothScanner, gattClient) as T
         }
     }
 
@@ -62,11 +64,14 @@ class MainActivity : ComponentActivity() {
             val currentTime by remember { clock.now() }
                 .collectAsState(initial = "")
             val deviceStatus by viewModel.deviceStatus.collectAsState(initial = Scanning)
+            val heartRate by viewModel.heartRate.collectAsState()
+            val pace by viewModel.pace.collectAsState()
+            val cadence by viewModel.cadence.collectAsState()
 
             HUDScreen(
-                pace = null,
-                heartRate = null,
-                cadence = null,
+                pace = pace,
+                heartRate = heartRate,
+                cadence = cadence,
                 currentTime = currentTime,
                 deviceStatus = deviceStatus,
                 batteryLevel = batteryLevel,
