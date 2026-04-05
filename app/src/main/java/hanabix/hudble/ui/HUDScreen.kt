@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import hanabix.hudble.R
+import hanabix.hudble.data.DeviceStatus
 
 private val HUDGreen = Color(0xFF00FF55)
 
@@ -34,10 +35,16 @@ fun HUDScreen(
     heartRate: String,
     cadence: String,
     currentTime: String,
-    deviceStatus: String,
+    deviceStatus: DeviceStatus,
     batteryLevel: String,
     modifier: Modifier = Modifier,
 ) {
+    val statusText = when (deviceStatus) {
+        is DeviceStatus.Scanning -> "Scanning..."
+        is DeviceStatus.Scanned -> deviceStatus.deviceName
+        is DeviceStatus.NotFound -> "Tap to rescan"
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -69,7 +76,7 @@ fun HUDScreen(
 
         Bar {
             Span(currentTime, "current_time")
-            Span(deviceStatus, "device_status")
+            Span(statusText, "device_status")
             Span(batteryLevel, "battery_level")
         }
     }
@@ -128,7 +135,33 @@ private fun HUDScreenPreview() {
         heartRate = "156",
         cadence = "178",
         currentTime = "15:47",
-        deviceStatus = "Enduro 2",
+        deviceStatus = DeviceStatus.Scanned("Enduro 2"),
+        batteryLevel = "87%",
+    )
+}
+
+@Preview(widthDp = 480, heightDp = 640, showBackground = true, backgroundColor = 0x000000)
+@Composable
+private fun HUDScreenNotFoundPreview() {
+    HUDScreen(
+        pace = "6'21\"",
+        heartRate = "156",
+        cadence = "178",
+        currentTime = "15:47",
+        deviceStatus = DeviceStatus.NotFound,
+        batteryLevel = "87%",
+    )
+}
+
+@Preview(widthDp = 480, heightDp = 640, showBackground = true, backgroundColor = 0x000000)
+@Composable
+private fun HUDScreenScanningPreview() {
+    HUDScreen(
+        pace = "6'21\"",
+        heartRate = "156",
+        cadence = "178",
+        currentTime = "15:47",
+        deviceStatus = DeviceStatus.Scanning,
         batteryLevel = "87%",
     )
 }

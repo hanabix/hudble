@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 import java.util.UUID
 
 private const val TAG = "BluetoothScanner"
@@ -41,7 +40,7 @@ class BluetoothScanner(
     private val bluetoothLeScanner = bluetoothAdapter.bluetoothLeScanner
 
     /**
-     * Scan for BLE devices that support HRS or RSCS.
+     * Scan for BLE devices that support the specified services.
      *
      * Emits each matching device as it is discovered.
      * The flow completes after [timeout] of scanning.
@@ -59,15 +58,18 @@ class BluetoothScanner(
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .build()
 
+        Log.i(TAG, "Starting scan for UUIDs: ${serviceUuids.map { it.toString().substring(4, 8) }}")
+
         val seenAddresses = mutableSetOf<String>()
 
         val callback = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
                 val address = result.device.address
-                if (address !in seenAddresses) {
-                    seenAddresses.add(address)
-                    trySend(result.device)
-                }
+                if (address in seenAddresses) return
+
+                Log.i(TAG, "Found: ${result.device.name} ($address)")
+                seenAddresses.add(address)
+                trySend(result.device)
             }
 
             override fun onScanFailed(errorCode: Int) {
