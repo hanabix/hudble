@@ -34,7 +34,7 @@ fun HUDScreen(
     heartRate: String,
     cadence: String,
     currentTime: String,
-    deviceName: String,
+    deviceStatus: String,
     batteryLevel: String,
     modifier: Modifier = Modifier,
 ) {
@@ -69,7 +69,7 @@ fun HUDScreen(
 
         Bar {
             Span(currentTime, "current_time")
-            Span(deviceName, "device_name")
+            Span(deviceStatus, "device_status")
             Span(batteryLevel, "battery_level")
         }
     }
@@ -128,7 +128,7 @@ private fun HUDScreenPreview() {
         heartRate = "156",
         cadence = "178",
         currentTime = "15:47",
-        deviceName = "Enduro 2",
+        deviceStatus = "Enduro 2",
         batteryLevel = "87%",
     )
 }
