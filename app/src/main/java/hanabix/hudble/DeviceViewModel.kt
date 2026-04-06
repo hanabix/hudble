@@ -9,8 +9,10 @@ import hanabix.hudble.data.DeviceStatus
 import hanabix.hudble.data.DeviceStatus.Found
 import hanabix.hudble.data.DeviceStatus.NotFound
 import hanabix.hudble.data.DeviceStatus.Scanning
-import hanabix.hudble.data.GattClient
+import hanabix.hudble.data.GattNotifier
+import hanabix.hudble.data.HeartRateService
 import hanabix.hudble.data.Pace.format
+import hanabix.hudble.data.RunningSpeedCadenceService
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,6 +21,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -34,8 +37,8 @@ import kotlin.time.Duration.Companion.seconds
  * ```
  */
 class DeviceViewModel(
+    private val context: android.content.Context,
     private val bluetoothScanner: BluetoothScanner,
-    private val gattClient: GattClient,
 ) : ViewModel() {
 
     private val _deviceStatus = MutableStateFlow<DeviceStatus>(Scanning)
@@ -61,15 +64,6 @@ class DeviceViewModel(
             .filter { it.keyCode in TapKeyCodes }
             .filter { _deviceStatus.value is NotFound }
             .onEach { scan() }
-            .launchIn(viewModelScope)
-
-        // Auto-rescan when connection is lost (after being connected)
-        gattClient.connectionState
-            .onEach {
-                Log.w(TAG, "Device disconnected, resuming scan")
-                clearSensorValues()
-                scan()
-            }
             .launchIn(viewModelScope)
     }
 
@@ -99,14 +93,19 @@ class DeviceViewModel(
     private fun connectAndSubscribe(device: android.bluetooth.BluetoothDevice) {
         viewModelScope.launch {
             try {
-                gattClient.connect(device)
+                val notifier = GattNotifier.connect(context = context, device = device) { status ->
+                    Log.w(TAG, "Device disconnected, status=$status")
+                    clearSensorValues()
+                    _deviceStatus.value = NotFound
+                }
 
                 // Cancel previous subscriptions
                 hrJob?.cancel()
                 rscsJob?.cancel()
 
-                // Subscribe to heart rate
-                hrJob = gattClient.subscribeHeartRate()
+                // Subscribe to heart rate (waits for descriptor write to complete)
+                hrJob = notifier.subscribe(HEART_RATE_SERVICE, HEART_RATE_MEASUREMENT)
+                    .mapNotNull { HeartRateService.parseHeartRate(it) }
                     .onEach { bpm ->
                         Log.d(TAG, "Heart rate received: $bpm")
                         _heartRate.value = bpm.toString()
@@ -114,18 +113,21 @@ class DeviceViewModel(
                     .catch { e -> Log.e(TAG, "Heart rate subscription error: ${e.message}") }
                     .launchIn(viewModelScope)
 
-                // Subscribe to RSCS (skip if not available)
-                rscsJob = gattClient.subscribeRSCS()
-                    .onEach { (speedMs, cadenceRpm) ->
-                        _cadence.value = if (cadenceRpm > 0) cadenceRpm.toString() else null
-                        _pace.value = format(speedMs)
+                // Subscribe to RSCS (waits for descriptor write to complete)
+                rscsJob = notifier.subscribe(RSC_SERVICE, RSC_MEASUREMENT)
+                    .mapNotNull { RunningSpeedCadenceService.parseMeasurement(it) }
+                    .onEach { measurement ->
+                        // Sensor reports single-leg cadence; multiply by 2 for bilateral cadence
+                        // consistent with Garmin watch user expectations.
+                        _cadence.value = if (measurement.cadenceRpm > 0) (measurement.cadenceRpm * 2).toString() else null
+                        _pace.value = format(measurement.speedMs)
                     }
                     .catch { e -> Log.w(TAG, "RSCS subscription ended: ${e.message}") }
                     .launchIn(viewModelScope)
             } catch (e: Exception) {
                 Log.e(TAG, "Connection failed for ${device.address}: ${e.message}", e)
                 clearSensorValues()
-                scan()
+                _deviceStatus.value = NotFound
             }
         }
     }
@@ -140,11 +142,17 @@ class DeviceViewModel(
         super.onCleared()
         hrJob?.cancel()
         rscsJob?.cancel()
-        gattClient.disconnect()
     }
 
     companion object {
         private const val TAG = "DeviceViewModel"
+
+        // Standard GATT UUIDs
+        private val HEART_RATE_SERVICE = java.util.UUID.fromString("0000180D-0000-1000-8000-00805F9B34FB")
+        private val HEART_RATE_MEASUREMENT = java.util.UUID.fromString("00002A37-0000-1000-8000-00805F9B34FB")
+        private val RSC_SERVICE = java.util.UUID.fromString("00001814-0000-1000-8000-00805F9B34FB")
+        private val RSC_MEASUREMENT = java.util.UUID.fromString("00002A53-0000-1000-8000-00805F9B34FB")
+
         private val TapKeyCodes = setOf(
             KeyEvent.KEYCODE_ENTER,
             KeyEvent.KEYCODE_SPACE,

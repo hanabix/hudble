@@ -16,8 +16,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import hanabix.hudble.data.BluetoothScanner
 import hanabix.hudble.data.Clock
-import hanabix.hudble.data.DeviceStatus
-import hanabix.hudble.data.GattClient
 import hanabix.hudble.data.GattServices
 import hanabix.hudble.data.HostBatteryObserver
 import hanabix.hudble.data.DeviceStatus.Scanning
@@ -33,13 +31,12 @@ class MainActivity : ComponentActivity() {
             listOf(GattServices.HEART_RATE, GattServices.RUNNING_SPEED_CADENCE),
         )
     }
-    private val gattClient by lazy { GattClient(applicationContext) }
 
     private val viewModel by viewModels<DeviceViewModel> {
         object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                DeviceViewModel(bluetoothScanner, gattClient) as T
+                DeviceViewModel(applicationContext, bluetoothScanner) as T
         }
     }
 
@@ -57,6 +54,8 @@ class MainActivity : ComponentActivity() {
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // 保持屏幕常亮
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         enableEdgeToEdge()
         setContent {
             val batteryLevel by remember { hostBatteryObserver.observe() }
