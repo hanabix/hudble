@@ -8,6 +8,7 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
@@ -210,7 +211,9 @@ class BleGatherTest {
     fun `filters inactive jobs before scan end`() = runBlocking {
         val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
         val scan = FakeScan()
-        val connect: BleConnect<String> = { _ -> { flow { } } }
+        val connect = BleConnect<String> { _: List<BleMetric> ->
+            { _: String -> emptyFlow() }
+        }
         val gather = BleViewModel.gather(scope, scan.asScan(), connect)
         val events = mutableListOf<BleEvent>()
 
@@ -255,7 +258,7 @@ class BleGatherTest {
     fun `keeps later found devices pending after first connection`() = runBlocking {
         val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
         val connect = FakeConnect()
-        val scan: BleScan<String> = { _ -> flowOf("a", "b", "c") }
+        val scan = BleScan<String> { _: List<BleMetric> -> flowOf("a", "b", "c") }
         val gather = BleViewModel.gather(scope, scan, connect.asConnect())
 
         gather(requestedMetrics()).launchIn(scope)
@@ -272,7 +275,7 @@ class BleGatherTest {
         val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
         val connect = FakeConnect()
         var collected = false
-        val scan: BleScan<String> = {
+        val scan = BleScan<String> {
             flow {
                 collected = true
                 emit("a")
@@ -296,7 +299,9 @@ class BleGatherTest {
     fun `emits unavailable when scan times out`() = runBlocking {
         val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
         val connect = FakeConnect()
-        val scan: BleScan<String> = { _ -> flow { awaitCancellation() } }
+        val scan = BleScan<String> { _: List<BleMetric> ->
+            flow { awaitCancellation() }
+        }
         val gather = BleViewModel.gather(
             scope = scope,
             scan = scan,
@@ -372,7 +377,7 @@ class BleGatherTest {
     private class FakeScan {
         private val channel = Channel<String>(Channel.UNLIMITED)
 
-        fun asScan(): BleScan<String> = { _ -> channel.receiveAsFlow() }
+        fun asScan(): BleScan<String> = BleScan { _: List<BleMetric> -> channel.receiveAsFlow() }
 
         suspend fun emit(device: String) {
             channel.send(device)
@@ -388,8 +393,8 @@ class BleGatherTest {
         val metricsInvoked = mutableListOf<List<BleMetric>>()
         private val sessions = linkedMapOf<String, FakeSession>()
 
-        fun asConnect(): BleConnect<String> = { metrics ->
-            { device ->
+        fun asConnect(): BleConnect<String> = BleConnect { metrics: List<BleMetric> ->
+            { device: String ->
                 invoked += device
                 metricsInvoked += metrics
                 sessions.getOrPut(device) { FakeSession(device) }.flow()

@@ -28,10 +28,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 private const val TAG = "AndroidTransport"
 private val CCCD = UUID.fromString("00002902-0000-1000-8000-00805F9B34FB")
 
-object AndroidTransport {
+internal object AndroidTransport {
 
     @SuppressLint("MissingPermission")
-    fun scan(context: Context): BleScan<BluetoothDevice> = { metrics ->
+    internal fun scan(context: Context): BleScan<BluetoothDevice> = BleScan { metrics ->
         val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         val bluetoothAdapter = bluetoothManager.adapter
         val bluetoothLeScanner = bluetoothAdapter.bluetoothLeScanner
@@ -68,7 +68,7 @@ object AndroidTransport {
     }
 
     @SuppressLint("MissingPermission")
-    fun connect(context: Context): BleConnect<BluetoothDevice> = { metrics ->
+    internal fun connect(context: Context): BleConnect<BluetoothDevice> = BleConnect { metrics ->
         { device ->
             if (metrics.isEmpty()) {
                 flow {
