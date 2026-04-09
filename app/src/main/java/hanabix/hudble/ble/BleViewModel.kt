@@ -3,8 +3,6 @@ package hanabix.hudble.ble
 import android.bluetooth.BluetoothDevice
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
@@ -31,7 +29,7 @@ internal class BleViewModel(
     fun run() {
         _bleStatus.value = STATUS_SCANNING
 
-        gather(viewModelScope, scan, connect)(BleMetric.entries)
+        DefaultBleGather(viewModelScope, scan, connect)(BleMetric.entries)
             .onEach(::render)
             .launchIn(viewModelScope)
     }
@@ -63,13 +61,6 @@ internal class BleViewModel(
     }
 
     companion object {
-        internal fun <D> gather(
-            scope: kotlinx.coroutines.CoroutineScope,
-            scan: BleScan<D>,
-            connect: BleConnect<D>,
-            timeout: Duration = 5.seconds,
-        ): BleGather = gatherBle(scope, scan, connect, timeout)
-
         /** Converts speed in m/s to pace in "M'SS\"" format. */
         internal fun pace(speedMs: Float): String? {
             if (speedMs <= 0f) return null

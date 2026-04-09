@@ -14,9 +14,14 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.util.UUID
 
-class GattCallbackTest {
+@RunWith(RobolectricTestRunner::class)
+@Config(manifest = Config.NONE)
+class AndroidConnectCallbackTest {
 
     @Test
     fun `onConnectionStateChange emits fatal on status failure`() {
@@ -314,7 +319,7 @@ class GattCallbackTest {
     ) {
         val events = mutableListOf<BleConnectEvent<BluetoothDevice>>()
         val device = mockk<BluetoothDevice>(relaxed = true)
-        val callback = AndroidTransport.GattCallback(
+        val callback = AndroidConnectCallback(
             device = device,
             metrics = metrics,
             emit = { events += it },

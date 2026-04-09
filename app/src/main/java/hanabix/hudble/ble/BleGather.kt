@@ -18,13 +18,13 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(FlowPreview::class)
-internal fun <D> gatherBle(
-    scope: CoroutineScope,
-    scan: BleScan<D>,
-    connect: BleConnect<D>,
-    timeout: Duration = 5.seconds,
-): BleGather = BleGather { metrics ->
-    channelFlow {
+internal class DefaultBleGather<D>(
+    private val scope: CoroutineScope,
+    private val scan: BleScan<D>,
+    private val connect: BleConnect<D>,
+    private val timeout: Duration = 5.seconds,
+) : BleGather {
+    override fun invoke(metrics: List<BleMetric>): Flow<BleEvent> = channelFlow {
         val bus = Channel<Event<D>>(Channel.UNLIMITED)
         var state = State<D>(metrics = metrics)
 
@@ -34,7 +34,7 @@ internal fun <D> gatherBle(
                 .launchIn(scope)
         }
 
-        val handle = dispatch(fire) { event ->
+        val handle = DefaultDispatch(fire) { event ->
             when (event) {
                 BleEvent.Unavailable -> {
                     trySend(event)
@@ -84,158 +84,149 @@ private fun interface Dispatch<D> {
     operator fun invoke(state: State<D>, event: Event<D>): State<D>
 }
 
-private fun <D> dispatch(
-    fire: ToConnect<D>,
-    send: (BleEvent) -> Unit,
-): Dispatch<D> = object : Dispatch<D> {
+private class DefaultDispatch<D>(
+    private val fire: ToConnect<D>,
+    private val send: (BleEvent) -> Unit,
+) : Dispatch<D> {
     override fun invoke(state: State<D>, event: Event<D>): State<D> {
         return when (event) {
-            is Event.Found -> onFound(state, event.device, fire)
-            is Event.Reply -> onReply(state, event.event, fire, send)
-            Event.NoMoreDevice -> onNoMoreDevice(state, send)
+            is Event.Found -> onFound(state, event.device)
+            is Event.Reply -> onReply(state, event.event)
+            Event.NoMoreDevice -> onNoMoreDevice(state)
         }
     }
-}
 
-private fun <D> onFound(
-    state: State<D>,
-    device: D,
-    fire: ToConnect<D>,
-): State<D> {
-    val (metrics, pending, _, jobs) = state
-    val next = pending + device
+    private fun onFound(
+        state: State<D>,
+        device: D,
+    ): State<D> {
+        val (metrics, pending, _, jobs) = state
+        val next = pending + device
 
-    return when (metrics.isEmpty()) {
-        true -> state.copy(pending = next)
-        false -> {
-            val first = next.first()
-            val id = first.id()
+        return when (metrics.isEmpty()) {
+            true -> state.copy(pending = next)
+            false -> {
+                val first = next.first()
+                val id = first.id()
 
-            state.copy(
-                metrics = emptyList(),
-                pending = next.drop(1),
-                jobs = jobs + (id to fire(first, metrics)),
-            )
+                state.copy(
+                    metrics = emptyList(),
+                    pending = next.drop(1),
+                    jobs = jobs + (id to fire(first, metrics)),
+                )
+            }
         }
     }
-}
 
-private fun <D> onReply(
-    state: State<D>,
-    reply: BleConnectEvent<D>,
-    fire: ToConnect<D>,
-    send: (BleEvent) -> Unit,
-): State<D> = when (reply) {
-    is BleConnectEvent.Unsupported -> {
-        val (device, part, metrics) = reply
-        onUnsupported(state, device, part, metrics, fire, send)
-    }
-
-    is BleConnectEvent.Notify -> {
-        val (device, meter) = reply
-        onNotify(state, device, meter, send)
-    }
-
-    is BleConnectEvent.Fatal -> {
-        val (device, _) = reply
-        onFatal(state, device, send)
-    }
-}
-
-private fun <D> onUnsupported(
-    state: State<D>,
-    device: D,
-    part: Boolean,
-    metrics: List<BleMetric>,
-    fire: ToConnect<D>,
-    send: (BleEvent) -> Unit,
-): State<D> {
-    val (_, pending, solid, jobs) = state
-    val id = device.id()
-    val actives = when (part) {
-        true -> jobs.filterValues(Job::isActive)
-        false -> (jobs - id).filterValues(Job::isActive)
-    }
-
-    return when {
-        pending.isNotEmpty() -> {
-            val head = pending.first()
-            val job = fire(head, metrics)
-
-            state.copy(
-                metrics = emptyList(),
-                pending = pending.drop(1),
-                jobs = actives + (head.id() to job),
-            )
+    private fun onReply(
+        state: State<D>,
+        reply: BleConnectEvent<D>,
+    ): State<D> = when (reply) {
+        is BleConnectEvent.Unsupported -> {
+            val (device, part, metrics) = reply
+            onUnsupported(state, device, part, metrics)
         }
 
-        solid && actives.isEmpty() -> {
-            send(BleEvent.Unavailable)
-            state.copy(
+        is BleConnectEvent.Notify -> {
+            val (device, meter) = reply
+            onNotify(state, device, meter)
+        }
+
+        is BleConnectEvent.Fatal -> {
+            val (device, _) = reply
+            onFatal(state, device)
+        }
+    }
+
+    private fun onUnsupported(
+        state: State<D>,
+        device: D,
+        part: Boolean,
+        metrics: List<BleMetric>,
+    ): State<D> {
+        val (_, pending, solid, jobs) = state
+        val id = device.id()
+        val actives = when (part) {
+            true -> jobs.filterValues(Job::isActive)
+            false -> (jobs - id).filterValues(Job::isActive)
+        }
+
+        return when {
+            pending.isNotEmpty() -> {
+                val head = pending.first()
+
+                state.copy(
+                    metrics = emptyList(),
+                    pending = pending.drop(1),
+                    jobs = actives + (head.id() to fire(head, metrics)),
+                )
+            }
+
+            solid && actives.isEmpty() -> {
+                send(BleEvent.Unavailable)
+                state.copy(
+                    metrics = metrics,
+                    jobs = actives,
+                )
+            }
+
+            else -> state.copy(
                 metrics = metrics,
                 jobs = actives,
             )
         }
+    }
 
-        else -> state.copy(
-            metrics = metrics,
-            jobs = actives,
+    private fun onNotify(
+        state: State<D>,
+        device: D,
+        meter: BleMeter,
+    ): State<D> {
+        send(BleEvent.Available(device = device.name(), meter = meter))
+        return state
+    }
+
+    private fun onFatal(
+        state: State<D>,
+        device: D,
+    ): State<D> {
+        val next = state.copy(
+            jobs = (state.jobs - device.id()).filterValues(Job::isActive),
         )
-    }
-}
+        return when {
+            next.solid && next.jobs.isEmpty() && next.pending.isEmpty() -> {
+                send(BleEvent.Unavailable)
+                next
+            }
 
-private fun <D> onNotify(
-    state: State<D>,
-    device: D,
-    meter: BleMeter,
-    send: (BleEvent) -> Unit,
-): State<D> {
-    send(BleEvent.Available(device = device.name(), meter = meter))
-    return state
-}
-
-private fun <D> onFatal(
-    state: State<D>,
-    device: D,
-    send: (BleEvent) -> Unit,
-): State<D> {
-    val next = state.copy(
-        jobs = (state.jobs - device.id()).filterValues(Job::isActive),
-    )
-    return when {
-        next.solid && next.jobs.isEmpty() && next.pending.isEmpty() -> {
-            send(BleEvent.Unavailable)
-            next
+            else -> next
         }
-
-        else -> next
     }
-}
 
-private fun <D> onNoMoreDevice(
-    state: State<D>,
-    send: (BleEvent) -> Unit,
-): State<D> {
-    val next = state.copy(
-        solid = true,
-        jobs = state.jobs.filterValues(Job::isActive),
-    )
-    return when {
-        next.jobs.isEmpty() && next.pending.isEmpty() -> {
-            send(BleEvent.Unavailable)
-            next
+    private fun onNoMoreDevice(
+        state: State<D>,
+    ): State<D> {
+        val next = state.copy(
+            solid = true,
+            jobs = state.jobs.filterValues(Job::isActive),
+        )
+        return when {
+            next.jobs.isEmpty() && next.pending.isEmpty() -> {
+                send(BleEvent.Unavailable)
+                next
+            }
+
+            else -> next
         }
-
-        else -> next
     }
-}
 
-private fun Any?.id(): String = when (this) {
-    is BluetoothDevice -> address
-    else -> toString()
-}
+    private fun Any?.id(): String = when (this) {
+        is BluetoothDevice -> address
+        else -> toString()
+    }
 
-private fun Any?.name(): String = when (this) {
-    is BluetoothDevice -> name ?: address
-    else -> toString()
+    private fun Any?.name(): String = when (this) {
+        is BluetoothDevice -> name ?: address
+        else -> toString()
+    }
 }

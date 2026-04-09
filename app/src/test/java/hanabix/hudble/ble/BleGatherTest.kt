@@ -28,7 +28,7 @@ class BleGatherTest {
         val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
         val scan = FakeScan()
         val connect = FakeConnect()
-        val gather = BleViewModel.gather(scope, scan.asScan(), connect.asConnect())
+        val gather = DefaultBleGather(scope, scan.asScan(), connect.asConnect())
         val events = mutableListOf<BleEvent>()
 
         gather(requestedMetrics()).onEach { events += it }.launchIn(scope)
@@ -66,7 +66,7 @@ class BleGatherTest {
         val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
         val scan = FakeScan()
         val connect = FakeConnect()
-        val gather = BleViewModel.gather(scope, scan.asScan(), connect.asConnect())
+        val gather = DefaultBleGather(scope, scan.asScan(), connect.asConnect())
         val events = mutableListOf<BleEvent>()
 
         gather(requestedMetrics()).onEach { events += it }.launchIn(scope)
@@ -95,7 +95,7 @@ class BleGatherTest {
         val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
         val scan = FakeScan()
         val connect = FakeConnect()
-        val gather = BleViewModel.gather(scope, scan.asScan(), connect.asConnect())
+        val gather = DefaultBleGather(scope, scan.asScan(), connect.asConnect())
         val events = mutableListOf<BleEvent>()
 
         gather(requestedMetrics()).onEach { events += it }.launchIn(scope)
@@ -124,11 +124,40 @@ class BleGatherTest {
     }
 
     @Test
+    fun `unsupported removes final active job and emits unavailable`() = runBlocking {
+        val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
+        val scan = FakeScan()
+        val connect = FakeConnect()
+        val gather = DefaultBleGather(scope, scan.asScan(), connect.asConnect())
+        val events = mutableListOf<BleEvent>()
+
+        gather(requestedMetrics()).onEach { events += it }.launchIn(scope)
+
+        scan.emit("a")
+        scan.close()
+
+        waitUntil("connection") {
+            connect.invoked.contains("a")
+        }
+
+        connect.session("a").emitUnsupported(
+            part = false,
+            metrics = listOf(BleMetric.HeartRate),
+        )
+
+        waitUntil("unavailable") {
+            events.lastOrNull() is BleEvent.Unavailable
+        }
+
+        assertEquals(listOf("a"), connect.invoked)
+    }
+
+    @Test
     fun `notify keeps pending device available for retry`() = runBlocking {
         val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
         val scan = FakeScan()
         val connect = FakeConnect()
-        val gather = BleViewModel.gather(scope, scan.asScan(), connect.asConnect())
+        val gather = DefaultBleGather(scope, scan.asScan(), connect.asConnect())
 
         gather(requestedMetrics()).launchIn(scope)
 
@@ -164,7 +193,7 @@ class BleGatherTest {
         val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
         val scan = FakeScan()
         val connect = FakeConnect()
-        val gather = BleViewModel.gather(scope, scan.asScan(), connect.asConnect())
+        val gather = DefaultBleGather(scope, scan.asScan(), connect.asConnect())
         val events = mutableListOf<BleEvent>()
 
         gather(requestedMetrics()).onEach { events += it }.launchIn(scope)
@@ -195,7 +224,7 @@ class BleGatherTest {
         val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
         val scan = FakeScan()
         val connect = FakeConnect()
-        val gather = BleViewModel.gather(scope, scan.asScan(), connect.asConnect())
+        val gather = DefaultBleGather(scope, scan.asScan(), connect.asConnect())
         val events = mutableListOf<BleEvent>()
 
         gather(requestedMetrics()).onEach { events += it }.launchIn(scope)
@@ -214,7 +243,7 @@ class BleGatherTest {
         val connect = BleConnect<String> { _: List<BleMetric> ->
             { _: String -> emptyFlow() }
         }
-        val gather = BleViewModel.gather(scope, scan.asScan(), connect)
+        val gather = DefaultBleGather(scope, scan.asScan(), connect)
         val events = mutableListOf<BleEvent>()
 
         gather(requestedMetrics()).onEach { events += it }.launchIn(scope)
@@ -232,7 +261,7 @@ class BleGatherTest {
         val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
         val scan = FakeScan()
         val connect = FakeConnect()
-        val gather = BleViewModel.gather(scope, scan.asScan(), connect.asConnect())
+        val gather = DefaultBleGather(scope, scan.asScan(), connect.asConnect())
         val events = mutableListOf<BleEvent>()
 
         gather(requestedMetrics()).onEach { events += it }.launchIn(scope)
@@ -259,7 +288,7 @@ class BleGatherTest {
         val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
         val connect = FakeConnect()
         val scan = BleScan<String> { _: List<BleMetric> -> flowOf("a", "b", "c") }
-        val gather = BleViewModel.gather(scope, scan, connect.asConnect())
+        val gather = DefaultBleGather(scope, scan, connect.asConnect())
 
         gather(requestedMetrics()).launchIn(scope)
 
@@ -281,7 +310,7 @@ class BleGatherTest {
                 emit("a")
             }
         }
-        val gather = BleViewModel.gather(scope, scan, connect.asConnect())
+        val gather = DefaultBleGather(scope, scan, connect.asConnect())
         val events = mutableListOf<BleEvent>()
 
         gather(emptyList()).onEach { events += it }.launchIn(scope)
@@ -302,7 +331,7 @@ class BleGatherTest {
         val scan = BleScan<String> { _: List<BleMetric> ->
             flow { awaitCancellation() }
         }
-        val gather = BleViewModel.gather(
+        val gather = DefaultBleGather(
             scope = scope,
             scan = scan,
             connect = connect.asConnect(),

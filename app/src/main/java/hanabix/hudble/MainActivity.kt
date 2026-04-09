@@ -13,7 +13,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModelProvider
-import hanabix.hudble.ble.AndroidTransport
+import hanabix.hudble.ble.AndroidConnect
+import hanabix.hudble.ble.AndroidScan
 import hanabix.hudble.ble.BleViewModel
 import hanabix.hudble.util.Clock
 import hanabix.hudble.util.HostBattery
@@ -34,8 +35,8 @@ class MainActivity : ComponentActivity() {
         object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-                val scanner = AndroidTransport.scan(application)
-                val connector = AndroidTransport.connect(application)
+                val scanner = AndroidScan(application)
+                val connector = AndroidConnect(application)
                 return BleViewModel(scanner, connector) as T
             }
         }
