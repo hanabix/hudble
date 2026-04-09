@@ -90,33 +90,6 @@ class BleGatherTest {
     }
 
     @Test
-    fun `fatal clears pending duplicate device`() = runBlocking {
-        val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
-        val scan = FakeScan()
-        val connect = FakeConnect()
-        val gather = BleViewModel.gather(scope, scan.asScan(), connect.asConnect())
-        val events = mutableListOf<BleEvent>()
-
-        gather(requestedMetrics()).onEach { events += it }.launchIn(scope)
-
-        scan.emit("a")
-        scan.emit("a")
-        scan.close()
-
-        waitUntil("connection") {
-            connect.invoked.contains("a")
-        }
-
-        connect.session("a").emitFatal("gone")
-
-        waitUntil("unavailable") {
-            events.lastOrNull() is BleEvent.Unavailable
-        }
-
-        assertEquals(listOf("a"), connect.invoked)
-    }
-
-    @Test
     fun `ignores unsupported and keeps forwarding notify`() = runBlocking {
         val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
         val scan = FakeScan()

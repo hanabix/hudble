@@ -125,7 +125,7 @@ object BleViewModel {
       val actives = (jobs - device.id).filter(_.isActive)
       if solid && actives.isEmpty then send(Unavailable)
 
-      State(metrics, pending - device, solid, actives)
+      State(metrics, pending, solid, actives)
 
     case _ => ??? // TODO complain by unexpected state with event  
 

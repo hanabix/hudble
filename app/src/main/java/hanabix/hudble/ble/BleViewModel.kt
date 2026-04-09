@@ -318,7 +318,6 @@ class BleViewModel(
             send: (BleEvent) -> Unit,
         ): State<D> {
             val next = state.copy(
-                pending = state.pending.filterNot { it.id() == device.id() },
                 jobs = (state.jobs - device.id()).filterValues(Job::isActive),
             )
             return when {
