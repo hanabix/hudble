@@ -1,14 +1,14 @@
 ## Code Model
 
 ```scala
-type BleScan[D]    = Seq[BleMetric] => Flow[D]
-type BleConnect[D] = Seq[BleMetric] => D => Flow[BleConnectEvent[D]]
+type BleScan[A]    = Seq[BleMetric] => Flow[A]
+type BleConnect[A] = Seq[BleMetric] => A => Flow[BleConnectEvent[A]]
 type BleGather     = Seq[BleMetric] => Flow[BleEvent] 
 
-enum BleConnectEvent[D]:
-  case Unsupported(device: D, part: Boolean, metrics: Seq[BleMetric]) // part 为 true 表示部分不支持
-  case Notify(device: D, meter: BleMeter)
-  case Fatal(device: D, cause: String)
+enum BleConnectEvent[A]:
+  case Unsupported(device: A, part: Boolean, metrics: Seq[BleMetric]) // part 为 true 表示部分不支持
+  case Notify(device: A, meter: BleMeter)
+  case Fatal(device: A, cause: String)
 
 enum BleEvent:
   case Available(device: String, meter: BleMeter)
@@ -52,13 +52,13 @@ class BleViewModel(
 }
 
 object BleViewModel {
-  type Dispatch[D] = (State[D], Event[D]) => State[D]
-  type ToConnect[D] = (D, Seq[BleMetric]) => Job
+  type Dispatch[A] = (State[A], Event[A]) => State[A]
+  type ToConnect[A] = (D, Seq[BleMetric]) => Job
 
-  def gather[D](
+  def gather[D: BleInfo](
     scope: CoroutineScope, 
-    scan: BleScan[D], 
-    connect: BleConnect[D]
+    scan: BleScan[A], 
+    connect: BleConnect[A]
   ): BleGather = metrics => 
     val bus: Channel[Event] = ???
     
@@ -87,7 +87,7 @@ object BleViewModel {
     }
 
 
-  def dispatch[D](fire: ToConnect[D], send: BleEvent => Unit) :Dispatch[D] = 
+  def dispatch[D: BleInfo](fire: ToConnect[A], send: BleEvent => Unit) :Dispatch[A] = 
     case (State(Seq(), pending, solid, jobs), Found(device)) =>
       State(Seq(), pending + device, solid, jobs)
 
@@ -129,17 +129,22 @@ object BleViewModel {
 
     case _ => ??? // TODO complain by unexpected state with event  
 
-  case class State[D](
+  case class State[A](
     metrics: Seq[BleMetrics]
-    pending: Seq[D], 
+    pending: Seq[A], 
     solid: Boolean,
     jobs: Map[String, Job]
   )
 
-  enum Event[D]:
-    case Found(device: D)
+  enum Event[A]:
+    case Found(device: A)
     case NoMoreDevice
     case Reply(event: BleConnectEvent)
+
+  trait BleInfo[A]:
+    extension (a: A)
+      def id: String
+      def name: String 
 }
 
 ```
