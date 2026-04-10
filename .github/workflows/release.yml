@@ -62,7 +62,7 @@ jobs:
             keystore="$RUNNER_TEMP/release.keystore"
             printf '%s' "$SIGNING_KEYSTORE_BASE64" | base64 --decode > "$keystore"
             store_pass="${SIGNING_KEYSTORE_PASSWORD:?missing SIGNING_KEYSTORE_PASSWORD}"
-            key_pass="${SIGNING_KEY_PASSWORD:-$store_pass}"
+            key_pass="$store_pass"
             alias_name="${SIGNING_KEY_ALIAS:?missing SIGNING_KEY_ALIAS}"
           else
             keystore="$RUNNER_TEMP/debug.keystore"
