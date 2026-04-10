@@ -6,12 +6,12 @@ type BleConnect[A] = Seq[BleMetric] => A => Flow[BleConnectEvent[A]]
 type BleGather     = Seq[BleMetric] => Flow[BleEvent] 
 
 enum BleConnectEvent[A]:
-  case Unsupported(device: A, part: Boolean, metrics: Seq[BleMetric]) // part 为 true 表示部分不支持
-  case Notify(device: A, meter: BleMeter)
-  case Fatal(device: A, cause: String)
+  case Unsupported(value: A, part: Boolean, metrics: Seq[BleMetric]) // part 为 true 表示部分不支持
+  case Notify(value: A, meter: BleMeter)
+  case Fatal(value: A, cause: String)
 
 enum BleEvent:
-  case Available(device: String, meter: BleMeter)
+  case Available(name: String, meter: BleMeter)
   case Unavailable
 
 enum BleMetric(val service: UUID, val characteristic: UUID):
@@ -40,11 +40,11 @@ class BleViewModel(
       .launchInScope(viewModelScope)
 
   def handle: PartialFunction[BleEvent, Unit] = 
-    case Available(device, (HeartRate, data)) => 
-      // bleStatus = device
+    case Available(value, (HeartRate, data)) => 
+      // bleStatus = value
       // heartRate = read(data)
-    case Available(device, (RunSpeedCadence, data)) => 
-      // bleStatus = device
+    case Available(value, (RunSpeedCadence, data)) => 
+      // bleStatus = value
       // (pace, cadence) = read(data)
     case Unavailable              => 
       // bleStatus = "Tap to Rescan"
@@ -62,8 +62,8 @@ object BleViewModel {
   ): BleGather = metrics => 
     val bus: Channel[Event] = ???
     
-    val fire: ToConnect = (device, metrics) =>
-      connect(device, metrics)
+    val fire: ToConnect = (value, metrics) =>
+      connect(value, metrics)
         .onEach(e => bus.send(Reply(e)))
         .lauchIn(scope)
       
@@ -88,13 +88,13 @@ object BleViewModel {
 
 
   def dispatch[D: BleInfo](fire: ToConnect[A], send: BleEvent => Unit) :Dispatch[A] = 
-    case (State(Seq(), pending, solid, jobs), Found(device)) =>
-      State(Seq(), pending + device, solid, jobs)
+    case (State(Seq(), pending, solid, jobs), Found(value)) =>
+      State(Seq(), pending + value, solid, jobs)
 
-    case (State(metrics, pending, solid, jobs), Found(device)) =>
-      val (head, tail) = pending + device
+    case (State(metrics, pending, solid, jobs), Found(value)) =>
+      val (head, tail) = pending + value
       val job = fire(head, metrics)
-      State(Seq(), tail, solid, jobs + (device.id -> job))
+      State(Seq(), tail, solid, jobs + (value.id -> job))
     
     case (State(metrics, pending, solid, jobs), NoMoreDevice) =>
       val actives = jobs.filter(_.isActive)
@@ -104,25 +104,25 @@ object BleViewModel {
 
       State(metrics, pending, true, actives)
     
-    case (State(_, pending, solid, jobs), Reply(Unsupported(device, part, metrics))) =>
-      val actives = (if part then jobs else jobs - device.name).filter(_.isActive)
+    case (State(_, pending, solid, jobs), Reply(Unsupported(value, part, metrics))) =>
+      val actives = (if part then jobs else jobs - value.name).filter(_.isActive)
 
       if pending.nonEmpty then
         val (head, tail) = pending
         val job = fire(head, metrics)
-        State(Seq(), tail, solid, actives + (device.id -> job))
+        State(Seq(), tail, solid, actives + (value.id -> job))
       else
         if solid && actives.isEmpty then send(Unavailable)
         State(metrics, pending, solid, actives)
 
-    case (State(metrics, pending, solid, jobs), Reply(Notify(device, meter))) =>
-      send(Available(device.name, meter))
+    case (State(metrics, pending, solid, jobs), Reply(Notify(value, meter))) =>
+      send(Available(value.name, meter))
       State(metrics, pending, solid, jobs)
 
-    case (State(metrics, pending, solid, jobs), Reply(Fatal(device, cause))) =>
+    case (State(metrics, pending, solid, jobs), Reply(Fatal(value, cause))) =>
       // TODO log warning cause for debug
       
-      val actives = (jobs - device.id).filter(_.isActive)
+      val actives = (jobs - value.id).filter(_.isActive)
       if solid && actives.isEmpty then send(Unavailable)
 
       State(metrics, pending, solid, actives)
@@ -137,7 +137,7 @@ object BleViewModel {
   )
 
   enum Event[A]:
-    case Found(device: A)
+    case Found(value: A)
     case NoMoreDevice
     case Reply(event: BleConnectEvent)
 

@@ -26,14 +26,29 @@ UI效果原型参见：[view-480x640](prototype/view-480x640.html)
 - [ ] [Cycling Power Service](https://www.bluetooth.com/specifications/specs/cycling-power-service/)
 
 
-## 连接设备
+## 下载安装
+
+TODO
+
+## 安装开发包
+
+```bash
+./gradlew assembleDebug
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+## 查询安装包版本
+
+```bash
+adb shell dumpsys package hanabix.hudble | grep versionName
+```
+
+## 关于连接
 
 - 自动启动设备扫描，并按发现顺利尝试连接设备，直至满足 HRS / RSCS 数据读取
-- 若无可用设备，则显示 `Tap to rescan`，可单击重扫
-
+- 若无可用设备，则显示 `Tap to Reconnect`，可单击重扫
 
 ## 已知局限
 
 - 仅支持 RSCS 必要测量数据，即 **速度** 和 **步频** 
 - 不支持设备手动选择连接
-
