@@ -40,7 +40,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 ## 查询安装包版本
 
 ```bash
-adb shell dumpsys package hanabix.hudble | grep versionName
+adb shell dumpsys package hanabix.hubu | grep versionName
 ```
 
 ## 关于连接
