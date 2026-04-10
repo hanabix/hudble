@@ -43,10 +43,10 @@ internal class AndroidScan(
     }
 }
 
-internal class AndroidScanCallback(
+private class AndroidScanCallback(
     private val emit: (ScannedDevice) -> Unit,
     private val close: () -> Unit,
-    private val log: Logger = AndroidLogger,
+    private val log: Logger,
 ) : AndroidBleScanCallback() {
     private val seen = mutableSetOf<String>()
 

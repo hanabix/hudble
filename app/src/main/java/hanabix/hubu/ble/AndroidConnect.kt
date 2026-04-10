@@ -55,7 +55,7 @@ internal class AndroidConnectCallback(
     private val device: ScannedDevice,
     private val metrics: List<BleMetric>,
     private val emit: (BleConnectEvent<ScannedDevice>) -> Unit,
-    private val log: Logger = AndroidLogger,
+    private val log: Logger,
     private val sdkInt: Int = Build.VERSION.SDK_INT,
 ) : BluetoothGattCallback() {
     private val supportedQueue = ConcurrentLinkedQueue<BleMetric>()
