@@ -17,9 +17,9 @@ private const val TAG = "AndroidScan"
 
 internal class AndroidScan(
     private val context: Context,
-) : BleScan<ScanResult> {
+) : BleScan<ScannedDevice> {
     @SuppressLint("MissingPermission")
-    override fun invoke(metrics: List<BleMetric>): Flow<ScanResult> = callbackFlow {
+    override fun invoke(metrics: List<BleMetric>): Flow<ScannedDevice> = callbackFlow {
         val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         val bluetoothAdapter = bluetoothManager.adapter
         val bluetoothLeScanner = bluetoothAdapter.bluetoothLeScanner
@@ -43,7 +43,7 @@ internal class AndroidScan(
 }
 
 internal class AndroidScanCallback(
-    private val emit: (ScanResult) -> Unit,
+    private val emit: (ScannedDevice) -> Unit,
     private val close: () -> Unit,
 ) : AndroidBleScanCallback() {
     private val seen = mutableSetOf<String>()
@@ -51,10 +51,10 @@ internal class AndroidScanCallback(
     override fun onScanResult(callbackType: Int, result: ScanResult) {
         val device = result.device
         val id = device.address
-        val recordName = result.scanRecord?.deviceName ?: id
+        val name = result.scanRecord?.deviceName ?: id
         if (!seen.add(id)) return
-        Log.i(TAG, "Found supported device: name=$recordName ($id)")
-        emit(result)
+        Log.i(TAG, "Found supported device: name=$name ($id)")
+        emit(ScannedDevice(device = device, name = name))
     }
 
     override fun onScanFailed(errorCode: Int) {

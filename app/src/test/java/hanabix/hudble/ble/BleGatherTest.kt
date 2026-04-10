@@ -1,6 +1,5 @@
 package hanabix.hudble.ble
 
-import android.bluetooth.le.ScanResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -338,11 +337,10 @@ class BleGatherTest {
         val viewModel = BleViewModel(
             scan = { flow { } },
             connect = { _ -> { flow { } } },
-            info = object : BleInfo<ScanResult> {
-                override fun id(value: ScanResult): String = value.device.address
+            info = object : BleInfo<ScannedDevice> {
+                override fun id(value: ScannedDevice): String = value.device.address
 
-                override fun name(value: ScanResult): String =
-                    value.scanRecord?.deviceName ?: value.device.address
+                override fun name(value: ScannedDevice): String = value.name
             },
         )
 

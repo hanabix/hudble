@@ -1,6 +1,6 @@
 package hanabix.hudble.ble
 
-import android.bluetooth.le.ScanResult
+import android.bluetooth.BluetoothDevice
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 
@@ -25,11 +25,19 @@ internal interface BleInfo<T> {
     fun name(value: T): String
 }
 
-internal val ScanResultBleInfo = object : BleInfo<ScanResult> {
-    override fun id(value: ScanResult): String = value.device.address
+internal data class ScannedDevice(
+    val device: BluetoothDevice,
+    val name: String,
+)
 
-    override fun name(value: ScanResult): String = value.scanRecord?.deviceName ?: value.device.address
+internal val ScannedDeviceBleInfo = object : BleInfo<ScannedDevice> {
+    override fun id(value: ScannedDevice): String = value.device.address
+
+    override fun name(value: ScannedDevice): String = value.name
 }
+
+internal const val STATUS_CONNECTING = "Connecting"
+internal const val STATUS_TAP_TO_RECONNECT = "Tap to Reconnect"
 
 internal enum class BleMetric(
     val service: java.util.UUID,

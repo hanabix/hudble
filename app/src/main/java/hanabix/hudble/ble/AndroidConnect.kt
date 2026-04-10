@@ -11,23 +11,22 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import java.util.UUID
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.atomic.AtomicBoolean
-import android.bluetooth.le.ScanResult
 
 private const val TAG = "AndroidConnect"
 private val CCCD = UUID.fromString("00002902-0000-1000-8000-00805F9B34FB")
 
 internal class AndroidConnect(
     private val context: Context,
-) : BleConnect<ScanResult> {
+) : BleConnect<ScannedDevice> {
     @SuppressLint("MissingPermission")
-    override fun invoke(metrics: List<BleMetric>): (ScanResult) -> Flow<BleConnectEvent<ScanResult>> = { device ->
+    override fun invoke(metrics: List<BleMetric>): (ScannedDevice) -> Flow<BleConnectEvent<ScannedDevice>> = { device ->
         callbackFlow {
-            val send: (BleConnectEvent<ScanResult>) -> Unit = { event ->
+            val send: (BleConnectEvent<ScannedDevice>) -> Unit = { event ->
                 when (event) {
                     is BleConnectEvent.Fatal -> {
                         trySend(event)
@@ -52,9 +51,9 @@ internal class AndroidConnect(
 }
 
 internal class AndroidConnectCallback(
-    private val device: ScanResult,
+    private val device: ScannedDevice,
     private val metrics: List<BleMetric>,
-    private val emit: (BleConnectEvent<ScanResult>) -> Unit,
+    private val emit: (BleConnectEvent<ScannedDevice>) -> Unit,
     private val sdkInt: Int = Build.VERSION.SDK_INT,
 ) : BluetoothGattCallback() {
     private val supportedQueue = ConcurrentLinkedQueue<BleMetric>()

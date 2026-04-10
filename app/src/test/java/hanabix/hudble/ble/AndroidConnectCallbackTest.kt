@@ -7,7 +7,6 @@ import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothGattService
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.BluetoothStatusCodes
-import android.bluetooth.le.ScanResult
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -150,7 +149,7 @@ class AndroidConnectCallbackTest {
             status = BluetoothGatt.GATT_SUCCESS,
         )
 
-        val unsupported = harness.events.filterIsInstance<BleConnectEvent.Unsupported<ScanResult>>()
+        val unsupported = harness.events.filterIsInstance<BleConnectEvent.Unsupported<ScannedDevice>>()
         assertEquals(1, unsupported.size)
         assertEquals(harness.device, unsupported.single().value)
         assertTrue(unsupported.single().part)
@@ -248,7 +247,7 @@ class AndroidConnectCallbackTest {
             value = byteArrayOf(0x06, 0x72),
         )
 
-        val notify = harness.events.filterIsInstance<BleConnectEvent.Notify<ScanResult>>()
+        val notify = harness.events.filterIsInstance<BleConnectEvent.Notify<ScannedDevice>>()
         assertEquals(1, notify.size)
         assertEquals(BleMetric.HeartRate, notify.single().meter.metric)
         assertArrayEquals(byteArrayOf(0x06, 0x72), notify.single().meter.data)
@@ -267,7 +266,7 @@ class AndroidConnectCallbackTest {
             characteristic = characteristic,
         )
 
-        val notify = harness.events.filterIsInstance<BleConnectEvent.Notify<ScanResult>>()
+        val notify = harness.events.filterIsInstance<BleConnectEvent.Notify<ScannedDevice>>()
         assertEquals(1, notify.size)
         assertEquals(BleMetric.HeartRate, notify.single().meter.metric)
         assertArrayEquals(byteArrayOf(0x06, 0x72), notify.single().meter.data)
@@ -318,8 +317,11 @@ class AndroidConnectCallbackTest {
         metrics: List<BleMetric> = listOf(BleMetric.HeartRate, BleMetric.RunSpeedCadence),
         sdkInt: Int = 33,
     ) {
-        val events = mutableListOf<BleConnectEvent<ScanResult>>()
-        val device = mockk<ScanResult>(relaxed = true)
+        val events = mutableListOf<BleConnectEvent<ScannedDevice>>()
+        val device = ScannedDevice(
+            device = mockk(relaxed = true),
+            name = "Enduro 2",
+        )
         val callback = AndroidConnectCallback(
             device = device,
             metrics = metrics,

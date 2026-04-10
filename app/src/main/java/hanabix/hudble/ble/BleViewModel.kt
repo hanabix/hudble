@@ -1,6 +1,5 @@
 package hanabix.hudble.ble
 
-import android.bluetooth.le.ScanResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -9,15 +8,12 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlin.math.roundToInt
 
-private const val STATUS_SCANNING = "Connecting"
-private const val STATUS_TAP_TO_RECONNECT = "Tap to Reconnect"
-
 internal class BleViewModel(
-    private val scan: BleScan<ScanResult>,
-    private val connect: BleConnect<ScanResult>,
-    private val info: BleInfo<ScanResult>,
+    private val scan: BleScan<ScannedDevice>,
+    private val connect: BleConnect<ScannedDevice>,
+    private val info: BleInfo<ScannedDevice>,
 ) : ViewModel() {
-    private val _bleStatus = MutableStateFlow(STATUS_SCANNING)
+    private val _bleStatus = MutableStateFlow(STATUS_CONNECTING)
     private val _heartRate = MutableStateFlow<String?>(null)
     private val _pace = MutableStateFlow<String?>(null)
     private val _cadence = MutableStateFlow<String?>(null)
@@ -28,7 +24,7 @@ internal class BleViewModel(
     val cadence: StateFlow<String?> = _cadence
 
     fun run() {
-        _bleStatus.value = STATUS_SCANNING
+        _bleStatus.value = STATUS_CONNECTING
 
         DefaultBleGather(viewModelScope, scan, connect, info)(BleMetric.entries)
             .onEach(::render)

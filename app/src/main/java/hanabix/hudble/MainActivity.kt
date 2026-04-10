@@ -16,7 +16,9 @@ import androidx.lifecycle.ViewModelProvider
 import hanabix.hudble.ble.AndroidConnect
 import hanabix.hudble.ble.AndroidScan
 import hanabix.hudble.ble.BleViewModel
-import hanabix.hudble.ble.ScanResultBleInfo
+import hanabix.hudble.ble.STATUS_CONNECTING
+import hanabix.hudble.ble.STATUS_TAP_TO_RECONNECT
+import hanabix.hudble.ble.ScannedDeviceBleInfo
 import hanabix.hudble.util.Clock
 import hanabix.hudble.util.HostBattery
 import hanabix.hudble.ui.HUDScreen
@@ -38,7 +40,7 @@ class MainActivity : ComponentActivity() {
             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
                 val scanner = AndroidScan(application)
                 val connector = AndroidConnect(application)
-                return BleViewModel(scanner, connector, ScanResultBleInfo) as T
+                return BleViewModel(scanner, connector, ScannedDeviceBleInfo) as T
             }
         }
     }
@@ -53,7 +55,7 @@ class MainActivity : ComponentActivity() {
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_UP &&
             event.keyCode in tapKeyCodes &&
-            viewModel.bleStatus.value == "Tap to Reconnect"
+            viewModel.bleStatus.value == STATUS_TAP_TO_RECONNECT
         ) {
             viewModel.run()
         }
@@ -71,7 +73,7 @@ class MainActivity : ComponentActivity() {
                 .collectAsState(initial = "")
             val currentTime by remember { clock.now() }
                 .collectAsState(initial = "")
-            val deviceStatus by viewModel.bleStatus.collectAsState(initial = "Connecting")
+            val deviceStatus by viewModel.bleStatus.collectAsState(initial = STATUS_CONNECTING)
             val heartRate by viewModel.heartRate.collectAsState()
             val pace by viewModel.pace.collectAsState()
             val cadence by viewModel.cadence.collectAsState()
