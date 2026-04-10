@@ -15,6 +15,10 @@ fun Project.readGitCommit(): String {
 }
 
 val gitCommit = project.readGitCommit()
+val versionNameProp = providers.gradleProperty("versionName").orNull
+val versionCodeProp = providers.gradleProperty("versionCode").orNull
+val releaseVersionName = versionNameProp ?: "0.1.0+$gitCommit"
+val releaseVersionCode = versionCodeProp?.toIntOrNull() ?: 1
 
 plugins {
     alias(libs.plugins.android.application)
@@ -31,10 +35,12 @@ android {
         applicationId = "hanabix.hubu"
         minSdk = 29
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0+$gitCommit"
+        versionCode = releaseVersionCode
+        versionName = releaseVersionName
 
         buildConfigField("String", "GIT_COMMIT", "\"$gitCommit\"")
+        buildConfigField("String", "APP_VERSION_NAME", "\"$releaseVersionName\"")
+        buildConfigField("int", "APP_VERSION_CODE", releaseVersionCode.toString())
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
