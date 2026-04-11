@@ -83,6 +83,8 @@ internal class AndroidConnectCallback(
 
     override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
         if (status == BluetoothGatt.GATT_SUCCESS) {
+            val result = gatt.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_LOW_POWER)
+            log.i(TAG, "requestConnectionPriority(lowPower) result=$result")
             val unsupported = metrics.filter { metric ->
                 gatt.getService(metric.service)
                     ?.getCharacteristic(metric.characteristic) == null

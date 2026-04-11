@@ -90,6 +90,9 @@ class AndroidConnectCallbackTest {
             status = BluetoothGatt.GATT_SUCCESS,
         )
 
+        verify(exactly = 1) {
+            gatt.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_LOW_POWER)
+        }
         assertTrue(harness.events.none { it is BleConnectEvent.Unsupported })
         verify(exactly = 1) {
             gatt.setCharacteristicNotification(hr.characteristic, true)
@@ -159,6 +162,7 @@ class AndroidConnectCallbackTest {
     fun `onServicesDiscovered emits fatal when no supported metrics`() {
         val harness = Harness()
         val gatt = mockk<BluetoothGatt>()
+        every { gatt.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_LOW_POWER) } returns true
         every { gatt.getService(BleMetric.HeartRate.service) } returns null
         every { gatt.getService(BleMetric.RunSpeedCadence.service) } returns null
 
@@ -353,6 +357,7 @@ class AndroidConnectCallbackTest {
         every { descriptor.setValue(any()) } returns true
         every { gatt.getService(metric.service) } returns service
         every { gatt.setCharacteristicNotification(characteristic, true) } returns true
+        every { gatt.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_LOW_POWER) } returns true
         every { gatt.writeDescriptor(descriptor) } returns true
         every {
             gatt.writeDescriptor(
