@@ -1,0 +1,16 @@
+name: Android Setup
+description: Setup JDK and Android SDK for this project
+runs:
+  using: composite
+  steps:
+    - name: Setup JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: "17"
+        cache: gradle
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      with:
+        packages: tools platform-tools platforms;android-36 build-tools;36.0.0
