@@ -1,0 +1,50 @@
+name: Android CI Main
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - .github/badges/coverage.svg
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Android Environment
+        uses: ./.github/actions/android-setup
+
+      - name: Generate coverage report
+        run: ./gradlew jacocoTestReport
+
+      - name: Generate coverage badge
+        uses: cicirello/jacoco-badge-generator@v2.12.1
+        with:
+          jacoco-csv-file: app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.csv
+          badges-directory: .github/badges
+          coverage-badge-filename: coverage.svg
+
+      - name: Sync coverage badge to main
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet -- .github/badges/coverage.svg; then
+            echo "coverage badge unchanged"
+            exit 0
+          fi
+
+          git add .github/badges/coverage.svg
+          git commit -m "chore: update coverage badge"
+          git push origin HEAD:main

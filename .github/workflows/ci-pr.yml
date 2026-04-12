@@ -1,4 +1,4 @@
-name: Android CI
+name: Android CI PR
 
 on:
   pull_request:
@@ -7,9 +7,6 @@ on:
       - synchronize
       - reopened
       - ready_for_review
-  push:
-    branches:
-      - main
 
 jobs:
   test:

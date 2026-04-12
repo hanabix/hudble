@@ -35,7 +35,7 @@ UI效果原型参见：[view-480x640](prototype/view-480x640.html)
 ## 下载安装包
 
 [![Latest Release](https://img.shields.io/github/v/release/hanabix/hubu?label=Latest%20Release)](https://github.com/hanabix/hubu/releases/latest/download/hubu-release.apk)
-![Coverage](https://github.com/hanabix/hubu/releases/latest/download/coverage.svg)
+![Coverage](.github/badges/coverage.svg)
 
 
 ## 安装开发包
