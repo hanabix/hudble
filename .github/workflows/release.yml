@@ -19,16 +19,6 @@ jobs:
       - name: Setup Android Environment
         uses: ./.github/actions/android-setup
 
-      - name: Generate coverage report
-        run: ./gradlew jacocoTestReport
-
-      - name: Generate coverage badge
-        uses: cicirello/jacoco-badge-generator@v2.12.1
-        with:
-          jacoco-csv-file: app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.csv
-          badges-directory: .github/badges
-          coverage-badge-filename: coverage.svg
-
       - name: Build release APK
         env:
           VERSION_NAME: ${{ github.ref_name }}
@@ -93,6 +83,4 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
-          files: |
-            ${{ env.SIGNED_APK }}
-            .github/badges/coverage.svg
+          files: ${{ env.SIGNED_APK }}
