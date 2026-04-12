@@ -1,17 +1,12 @@
 import org.gradle.testing.jacoco.tasks.JacocoReport
-import java.io.ByteArrayOutputStream
 
 fun Project.readGitCommit(): String {
-    val stdout = ByteArrayOutputStream()
-    return runCatching {
-        exec {
-            commandLine("git", "rev-parse", "--short", "HEAD")
-            standardOutput = stdout
-            errorOutput = ByteArrayOutputStream()
-            isIgnoreExitValue = true
-        }
-        stdout.toString().trim()
-    }.getOrDefault("unknown").ifBlank { "unknown" }
+    val commit = providers.exec {
+        commandLine("git", "rev-parse", "--short", "HEAD")
+    }.standardOutput.asText.get().trim()
+
+    check(commit.isNotBlank()) { "Failed to read git commit hash." }
+    return commit
 }
 
 val gitCommit = project.readGitCommit()
@@ -114,10 +109,10 @@ tasks.register<JacocoReport>("jacocoTestReport") {
         "**/*\$inlined$*.*",
     )
 
-    val debugTree = fileTree("${buildDir}/intermediates/javac/debug/classes") {
+    val debugTree = fileTree(layout.buildDirectory.dir("intermediates/javac/debug/classes").get().asFile) {
         exclude(fileFilter)
     }
-    val kotlinTree = fileTree("${buildDir}/tmp/kotlin-classes/debug") {
+    val kotlinTree = fileTree(layout.buildDirectory.dir("tmp/kotlin-classes/debug").get().asFile) {
         exclude(fileFilter)
     }
 
@@ -130,7 +125,7 @@ tasks.register<JacocoReport>("jacocoTestReport") {
     )
     executionData.setFrom(
         files(
-            "${buildDir}/jacoco/testDebugUnitTest.exec",
+            layout.buildDirectory.file("jacoco/testDebugUnitTest.exec").get().asFile,
         ),
     )
 }
