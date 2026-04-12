@@ -12,11 +12,5 @@ runs:
 
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
-
-    - name: Accept SDK licenses
-      shell: bash
-      run: yes | sdkmanager --licenses >/dev/null
-
-    - name: Install SDK packages
-      shell: bash
-      run: sdkmanager --install "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+      with:
+        packages: tools platform-tools platforms;android-36 build-tools;36.0.0
