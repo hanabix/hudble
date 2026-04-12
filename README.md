@@ -32,13 +32,14 @@ UI效果原型参见：[view-480x640](prototype/view-480x640.html)
 - [ ] [Cycling Power Service](https://www.bluetooth.com/specifications/specs/cycling-power-service/)
 
 
-## 下载
+## 下载安装包
 
 [![Latest Release](https://img.shields.io/github/v/release/hanabix/hubu?label=Latest%20Release)](https://github.com/hanabix/hubu/releases/latest/download/hubu-release.apk)
 
-## 安装
+## 安装开发包
 
 ```bash
+./gradlew assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
