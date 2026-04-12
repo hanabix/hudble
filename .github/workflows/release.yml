@@ -16,21 +16,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-          cache: gradle
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Accept SDK licenses
-        run: yes | sdkmanager --licenses >/dev/null
-
-      - name: Install SDK packages
-        run: sdkmanager --install "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+      - name: Setup Android Environment
+        uses: ./.github/actions/android-setup
 
       - name: Run tests
         run: ./gradlew testDebugUnitTest
