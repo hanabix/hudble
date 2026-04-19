@@ -13,12 +13,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModelProvider
-import hanabix.hubu.ble.AndroidConnect
-import hanabix.hubu.ble.AndroidScan
+import hanabix.hubu.ble.BleConnect
+import hanabix.hubu.ble.BleScan
 import hanabix.hubu.ble.BleViewModel
+import hanabix.hubu.ble.DeviceInfo
 import hanabix.hubu.ble.STATUS_CONNECTING
 import hanabix.hubu.ble.STATUS_TAP_TO_RECONNECT
-import hanabix.hubu.ble.ScannedDeviceBleInfo
 import hanabix.hubu.util.Clock
 import hanabix.hubu.util.HostBattery
 import hanabix.hubu.ui.HUDScreen
@@ -38,9 +38,9 @@ class MainActivity : ComponentActivity() {
         object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-                val scanner = AndroidScan(application)
-                val connector = AndroidConnect(application)
-                return BleViewModel(scanner, connector, ScannedDeviceBleInfo) as T
+                val scanner = BleScan(application)
+                val connector = BleConnect(application)
+                return BleViewModel(scanner, connector, DeviceInfo.ScannedDeviceInfo) as T
             }
         }
     }

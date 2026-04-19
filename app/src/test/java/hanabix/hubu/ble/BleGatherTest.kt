@@ -49,7 +49,7 @@ class BleGatherTest {
             events.any { it is BleEvent.Available }
         }
 
-        connect.session("a").emitFatal("gone")
+        connect.session("a").emitDisconnected("gone")
 
         waitUntil("unavailable") {
             events.lastOrNull() is BleEvent.Unavailable
@@ -82,7 +82,7 @@ class BleGatherTest {
             connect.invoked.contains("a")
         }
 
-        connect.session("a").emitFatal("gone")
+        connect.session("a").emitDisconnected("gone")
         connect.session("a").emitNotify(
             BleMetric.HeartRate,
             byteArrayOf(0x06, 0x72),
@@ -112,8 +112,7 @@ class BleGatherTest {
             connect.invoked.contains("a")
         }
 
-        connect.session("a").emitUnsupported(
-            part = true,
+        connect.session("a").emitConnected(
             metrics = listOf(BleMetric.HeartRate),
         )
         connect.session("a").emitNotify(BleMetric.HeartRate, byteArrayOf(0x06, 0x72))
@@ -129,7 +128,7 @@ class BleGatherTest {
     }
 
     @Test
-    fun `unsupported removes final active job and emits unavailable`() = runBlocking {
+    fun `abandon emits unavailable when scan ended and idle`() = runBlocking {
         val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
         val scan = FakeScan()
         val connect = FakeConnect()
@@ -145,8 +144,7 @@ class BleGatherTest {
             connect.invoked.contains("a")
         }
 
-        connect.session("a").emitUnsupported(
-            part = false,
+        connect.session("a").emitAbandon(
             metrics = listOf(BleMetric.HeartRate),
         )
 
@@ -154,7 +152,40 @@ class BleGatherTest {
             events.lastOrNull() is BleEvent.Unavailable
         }
 
-        assertEquals(listOf("a"), connect.invoked)
+        assertEquals(
+            listOf("a"),
+            connect.invoked,
+        )
+    }
+
+    @Test
+    fun `abandon retries pending device before unavailable`() = runBlocking {
+        val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
+        val scan = FakeScan()
+        val connect = FakeConnect()
+        val gather = DefaultBleGather(scope, scan.asScan(), connect.asConnect(), FakeInfo())
+        val events = mutableListOf<BleEvent>()
+
+        gather(requestedMetrics()).onEach { events += it }.launchIn(scope)
+
+        scan.emit("a")
+        scan.emit("b")
+        scan.close()
+
+        waitUntil("first connection") {
+            connect.invoked.contains("a")
+        }
+
+        connect.session("a").emitAbandon(
+            metrics = listOf(BleMetric.HeartRate),
+        )
+
+        waitUntil("retry connection") {
+            connect.invoked.contains("b")
+        }
+
+        assertTrue(events.none { it is BleEvent.Unavailable })
+        assertEquals(listOf("a", "b"), connect.invoked)
     }
 
     @Test
@@ -178,8 +209,7 @@ class BleGatherTest {
             BleMetric.HeartRate,
             byteArrayOf(0x06, 0x72),
         )
-        connect.session("a").emitUnsupported(
-            part = true,
+        connect.session("a").emitConnected(
             metrics = listOf(BleMetric.HeartRate),
         )
 
@@ -247,7 +277,7 @@ class BleGatherTest {
     }
 
     @Test
-    fun `filters inactive jobs before scan end`() = runBlocking {
+    fun `scan end keeps completed connections without unavailable`() = runBlocking {
         val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
         val scan = FakeScan()
         val connect = BleConnect<String> { _: List<BleMetric> ->
@@ -261,9 +291,9 @@ class BleGatherTest {
         scan.emit("a")
         scan.close()
 
-        waitUntil("unavailable") {
-            events.lastOrNull() is BleEvent.Unavailable
-        }
+        delay(50)
+
+        assertTrue(events.none { it is BleEvent.Unavailable })
     }
 
     @Test
@@ -285,7 +315,7 @@ class BleGatherTest {
 
         scan.close()
 
-        connect.session("a").emitFatal("gone")
+        connect.session("a").emitDisconnected("gone")
 
         delay(50)
 
@@ -337,10 +367,10 @@ class BleGatherTest {
         val viewModel = BleViewModel(
             scan = { flow { } },
             connect = { _ -> { flow { } } },
-            info = object : BleInfo<ScannedDevice> {
-                override fun id(value: ScannedDevice): String = value.device.address
+            info = object : DeviceInfo<ScannedDevice> {
+                override fun ScannedDevice.id(): String = device.address
 
-                override fun name(value: ScannedDevice): String = value.name
+                override fun ScannedDevice.name(): String = name
             },
         )
 
@@ -410,10 +440,10 @@ class BleGatherTest {
 
     private class FakeInfo(
         private val names: Map<String, String> = emptyMap(),
-    ) : BleInfo<String> {
-        override fun id(value: String): String = value
+    ) : DeviceInfo<String> {
+        override fun String.id(): String = this
 
-        override fun name(value: String): String = names[value] ?: value
+        override fun String.name(): String = names[this] ?: this
     }
 
     private class FakeConnect {
@@ -435,21 +465,26 @@ class BleGatherTest {
     private class FakeSession(
         private val device: String,
     ) {
-        private val channel = Channel<BleConnectEvent<String>>(Channel.UNLIMITED)
+        private val channel = Channel<BleConnect.Event<String>>(Channel.UNLIMITED)
 
-        fun flow(): Flow<BleConnectEvent<String>> = channel.receiveAsFlow()
+        fun flow(): Flow<BleConnect.Event<String>> = channel.receiveAsFlow()
 
-        suspend fun emitUnsupported(
-            part: Boolean,
-            metrics: List<BleMetric>,
-        ) {
+        suspend fun emitConnected(metrics: List<BleMetric>) {
             channel.send(
-                BleConnectEvent.Unsupported(
-                    value = device,
-                    part = part,
-                    metrics = metrics,
+                BleConnect.Event.Connected(
+                    unsupported = metrics,
                 ),
             )
+        }
+
+        suspend fun emitAbandon(metrics: List<BleMetric>) {
+            channel.send(
+                BleConnect.Event.Abandon(
+                    device = device,
+                    unsupported = metrics,
+                ),
+            )
+            channel.close()
         }
 
         suspend fun emitNotify(
@@ -457,17 +492,17 @@ class BleGatherTest {
             data: ByteArray,
         ) {
             channel.send(
-                BleConnectEvent.Notify(
-                    value = device,
+                BleConnect.Event.Notify(
+                    device = device,
                     meter = BleMeter(metric = metric, data = data),
                 ),
             )
         }
 
-        suspend fun emitFatal(cause: String) {
+        suspend fun emitDisconnected(cause: String) {
             channel.send(
-                BleConnectEvent.Fatal(
-                    value = device,
+                BleConnect.Event.Disconnected(
+                    device = device,
                     cause = cause,
                 ),
             )

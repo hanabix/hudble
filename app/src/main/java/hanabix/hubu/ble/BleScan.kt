@@ -2,7 +2,7 @@ package hanabix.hubu.ble
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothManager
-import android.bluetooth.le.ScanCallback as AndroidBleScanCallback
+import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
@@ -12,11 +12,28 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
+internal fun interface BleScan<T> {
+    typealias CreateCallback = (BleChannel<ScannedDevice>) -> ScanCallback
+
+    operator fun invoke(metrics: List<BleMetric>): Flow<T>
+
+    companion object {
+        operator fun invoke(
+            context: Context,
+            createCallback: CreateCallback = default(),
+        ): BleScan<ScannedDevice> = AndroidScan(context, createCallback)
+
+        fun default(): CreateCallback = { channel ->
+            AndroidScanCallback(channel, AndroidLogger)
+        }
+    }
+}
+
 private const val TAG = "AndroidScan"
 
 internal class AndroidScan(
     private val context: Context,
-    private val log: Logger = AndroidLogger,
+    private val createCallback: BleScan.CreateCallback,
 ) : BleScan<ScannedDevice> {
     @SuppressLint("MissingPermission")
     override fun invoke(metrics: List<BleMetric>): Flow<ScannedDevice> = callbackFlow {
@@ -32,11 +49,15 @@ internal class AndroidScan(
             .setCallbackType(ScanSettings.CALLBACK_TYPE_FIRST_MATCH)
             .build()
 
-        val callback = AndroidScanCallback(
-            emit = { result -> trySend(result) },
-            close = { close() },
-            log = log,
-        )
+        val callback = createCallback(object : BleChannel<ScannedDevice> {
+            override fun emit(a: ScannedDevice) {
+                trySend(a)
+            }
+
+            override fun close() {
+                close()
+            }
+        })
 
         bluetoothLeScanner.startScan(filters, settings, callback)
         awaitClose { bluetoothLeScanner.stopScan(callback) }
@@ -44,10 +65,9 @@ internal class AndroidScan(
 }
 
 private class AndroidScanCallback(
-    private val emit: (ScannedDevice) -> Unit,
-    private val close: () -> Unit,
+    private val channel: BleChannel<ScannedDevice>,
     private val log: Logger,
-) : AndroidBleScanCallback() {
+) : ScanCallback() {
     private val seen = mutableSetOf<String>()
 
     override fun onScanResult(callbackType: Int, result: ScanResult) {
@@ -56,11 +76,11 @@ private class AndroidScanCallback(
         val name = result.scanRecord?.deviceName ?: id
         if (!seen.add(id)) return
         log.i(TAG, "Found supported device: name=$name ($id)")
-        emit(ScannedDevice(device = device, name = name))
+        channel.emit(ScannedDevice(device = device, name = name))
     }
 
     override fun onScanFailed(errorCode: Int) {
         log.w(TAG, "BLE scan failed: code=$errorCode")
-        close()
+        channel.close()
     }
 }

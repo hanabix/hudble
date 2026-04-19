@@ -11,7 +11,7 @@ import kotlin.math.roundToInt
 internal class BleViewModel(
     private val scan: BleScan<ScannedDevice>,
     private val connect: BleConnect<ScannedDevice>,
-    private val info: BleInfo<ScannedDevice>,
+    private val info: DeviceInfo<ScannedDevice>,
 ) : ViewModel() {
     private val _bleStatus = MutableStateFlow(STATUS_CONNECTING)
     private val _heartRate = MutableStateFlow<String?>(null)
