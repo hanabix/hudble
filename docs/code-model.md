@@ -28,7 +28,7 @@ enum BleEvent {
 type Launch[A] = (A, Seq[BleMetric]) => Job
 
 trait BleChannel[A] {
-  def send(a: A): Unit
+  def emit(a: A): Unit
   def close(): Unit
 }
 
@@ -42,15 +42,14 @@ object BleReact {
     scanningEnded: Boolean = false,
     pending: Seq[A] = Seq.empty(),
     connecting: Map[DeviceId, Job] = Map.empty()  
-  )
-
-  extension [A] (state: State[A]):
+  ) {
     def unsupported(metrics: Seq[BleMetric]): State[A] = ???
     def scanningEnded(): State[A] = ???
     def pending(fn: Seq[A] => Seq[A]): State[A] = ???
     def connecting(fn: Map[DeviceId, Job] => Map[DeviceId, Job]): State[A] = ???
     def launchPending(info: DeviceInfo[A], launch: Launch[A]): State[A] = ???
     def sendIfUnavailable(channel: BleChannel[BleEvent]): State[A] = ???
+  }
   
   enum Event[A]:
     case Found(device: A)
@@ -65,7 +64,7 @@ object BleReact {
 
 type BleScan[A] = Seq[BleMetric] => Flow[A]
 object BleScan {
-  type CreateCallback = BleChannel[ScannedDevice] => AndroidBleScanCallback 
+  type CreateCallback = BleChannel[ScannedDevice] => ScanCallback 
   def apply(context: Context, createCallback: CreateCallback): BleScan[ScannedDevice] = ???
   
   def default: CreateCallback = ???

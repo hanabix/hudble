@@ -13,8 +13,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModelProvider
-import hanabix.hubu.ble.AndroidConnect
-import hanabix.hubu.ble.AndroidScan
+import hanabix.hubu.ble.BleConnect
+import hanabix.hubu.ble.BleScan
 import hanabix.hubu.ble.BleViewModel
 import hanabix.hubu.ble.DeviceInfo
 import hanabix.hubu.ble.STATUS_CONNECTING
@@ -38,8 +38,8 @@ class MainActivity : ComponentActivity() {
         object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-                val scanner = AndroidScan(application)
-                val connector = AndroidConnect(application)
+                val scanner = BleScan(application)
+                val connector = BleConnect(application)
                 return BleViewModel(scanner, connector, DeviceInfo.ScannedDeviceInfo) as T
             }
         }

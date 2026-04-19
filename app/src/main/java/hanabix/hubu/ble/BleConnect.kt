@@ -19,33 +19,67 @@ import kotlinx.coroutines.flow.callbackFlow
 private const val TAG = "AndroidConnect"
 private val CCCD = UUID.fromString("00002902-0000-1000-8000-00805F9B34FB")
 
+internal fun interface BleConnect<T> {
+    typealias CreateCallback = (
+        ScannedDevice,
+        List<BleMetric>,
+        BleChannel<BleConnect.Event<ScannedDevice>>,
+    ) -> BluetoothGattCallback
+
+    operator fun invoke(metrics: List<BleMetric>): (T) -> Flow<Event<T>>
+
+    companion object {
+        operator fun invoke(
+            context: Context,
+            createCallback: CreateCallback = default(),
+        ): BleConnect<ScannedDevice> = AndroidConnect(context, createCallback)
+
+        fun default(): CreateCallback = { device, metrics, channel ->
+            AndroidConnectCallback(device, metrics, channel, AndroidLogger)
+        }
+    }
+
+    sealed interface Event<out T> {
+        data class Connected(
+            val unsupported: List<BleMetric>,
+        ) : Event<Nothing>
+
+        data class Abandon<T>(
+            val device: T,
+            val unsupported: List<BleMetric>,
+        ) : Event<T>
+
+        data class Notify<T>(
+            val device: T,
+            val meter: BleMeter,
+        ) : Event<T>
+
+        data class Disconnected<T>(
+            val device: T,
+            val cause: String,
+        ) : Event<T>
+    }
+}
+
 internal class AndroidConnect(
     private val context: Context,
-    private val log: Logger = AndroidLogger,
+    private val createCallback: BleConnect.CreateCallback,
 ) : BleConnect<ScannedDevice> {
     @SuppressLint("MissingPermission")
     override fun invoke(metrics: List<BleMetric>): (ScannedDevice) -> Flow<BleConnect.Event<ScannedDevice>> = { device ->
         callbackFlow {
-            val send: (BleConnect.Event<ScannedDevice>) -> Unit = { event ->
-                when (event) {
-                    is BleConnect.Event.Abandon -> {
-                        trySend(event)
-                        close()
+            val callback = createCallback(
+                device,
+                metrics,
+                object : BleChannel<BleConnect.Event<ScannedDevice>> {
+                    override fun emit(a: BleConnect.Event<ScannedDevice>) {
+                        trySend(a)
                     }
 
-                    is BleConnect.Event.Disconnected -> {
-                        trySend(event)
+                    override fun close() {
                         close()
                     }
-
-                    else -> trySend(event)
-                }
-            }
-            val callback = AndroidConnectCallback(
-                device = device,
-                metrics = metrics,
-                emit = send,
-                log = log,
+                },
             )
             val gatt = device.device.connectGatt(context.applicationContext, false, callback)
 
@@ -59,7 +93,7 @@ internal class AndroidConnect(
 internal class AndroidConnectCallback(
     private val device: ScannedDevice,
     private val metrics: List<BleMetric>,
-    private val emit: (BleConnect.Event<ScannedDevice>) -> Unit,
+    private val channel: BleChannel<BleConnect.Event<ScannedDevice>>,
     private val log: Logger,
     private val sdkInt: Int = Build.VERSION.SDK_INT,
 ) : BluetoothGattCallback() {
@@ -95,26 +129,15 @@ internal class AndroidConnectCallback(
                     ?.getCharacteristic(metric.characteristic) == null
             }
             val supported = metrics.filterNot { metric -> metric in unsupported.toSet() }
-            if (unsupported.isNotEmpty()) {
-                if (supported.isNotEmpty()) {
-                    emit(BleConnect.Event.Connected(unsupported = unsupported))
-                } else {
-                    emit(
-                        BleConnect.Event.Abandon(
-                            device = device,
-                            unsupported = unsupported,
-                        ),
-                    )
-                }
-            }
-            if (supported.isEmpty()) {
-                fatal("No supported metrics found")
+            if (unsupported.size == metrics.size) {
+                emitAbandon(unsupported)
                 return
             }
+            channel.emit(BleConnect.Event.Connected(unsupported = unsupported))
             supportedQueue.addAll(supported)
             enableNextNotification(gatt)
         } else {
-            fatal("Service discovery failed: status=$status")
+            emitAbandon(metrics)
         }
     }
 
@@ -156,7 +179,7 @@ internal class AndroidConnectCallback(
                 return
             }
 
-        emit(
+        channel.emit(
             BleConnect.Event.Notify(
                 device = device,
                 meter = BleMeter(metric = metric, data = value),
@@ -189,9 +212,19 @@ internal class AndroidConnectCallback(
         }
     }
 
+    private fun emitAbandon(unsupported: List<BleMetric>) {
+        channel.emit(
+            BleConnect.Event.Abandon(
+                device = device,
+                unsupported = unsupported,
+            ),
+        )
+        channel.close()
+    }
+
     private fun fatal(message: String) {
         if (fatalEmit.compareAndSet(false, true)) {
-            emit(
+            channel.emit(
                 BleConnect.Event.Disconnected(
                     device = device,
                     cause = message,

@@ -16,6 +16,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.UUID
 
+@Suppress("DEPRECATION")
 class AndroidConnectCallbackTest {
 
     @Test
@@ -93,7 +94,9 @@ class AndroidConnectCallbackTest {
         verify(exactly = 1) {
             gatt.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_LOW_POWER)
         }
-        assertTrue(harness.events.none { it is BleConnect.Event.Connected })
+        val connected = harness.events.filterIsInstance<BleConnect.Event.Connected>()
+        assertEquals(1, connected.size)
+        assertTrue(connected.single().unsupported.isEmpty())
         verify(exactly = 1) {
             gatt.setCharacteristicNotification(hr.characteristic, true)
             gatt.writeDescriptor(hr.descriptor, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
@@ -157,7 +160,7 @@ class AndroidConnectCallbackTest {
     }
 
     @Test
-    fun `onServicesDiscovered emits fatal when no supported metrics`() {
+    fun `onServicesDiscovered emits abandon when no metrics supported`() {
         val harness = Harness()
         val gatt = mockk<BluetoothGatt>()
         every { gatt.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_LOW_POWER) } returns true
@@ -169,11 +172,15 @@ class AndroidConnectCallbackTest {
             status = BluetoothGatt.GATT_SUCCESS,
         )
 
-        assertEquals(1, harness.fatalCount())
+        val abandon = harness.events.filterIsInstance<BleConnect.Event.Abandon<ScannedDevice>>()
+        assertEquals(1, abandon.size)
+        assertEquals(listOf(BleMetric.HeartRate, BleMetric.RunSpeedCadence), abandon.single().unsupported)
+        assertTrue(harness.closed)
+        assertEquals(0, harness.fatalCount())
     }
 
     @Test
-    fun `onServicesDiscovered emits fatal on failure`() {
+    fun `onServicesDiscovered emits abandon on failure`() {
         val harness = Harness()
         val gatt = mockk<BluetoothGatt>()
 
@@ -182,7 +189,11 @@ class AndroidConnectCallbackTest {
             status = 7,
         )
 
-        assertEquals(1, harness.fatalCount())
+        val abandon = harness.events.filterIsInstance<BleConnect.Event.Abandon<ScannedDevice>>()
+        assertEquals(1, abandon.size)
+        assertEquals(listOf(BleMetric.HeartRate, BleMetric.RunSpeedCadence), abandon.single().unsupported)
+        assertTrue(harness.closed)
+        assertEquals(0, harness.fatalCount())
     }
 
     @Test
@@ -315,6 +326,7 @@ class AndroidConnectCallbackTest {
         sdkInt: Int = 33,
     ) {
         val events = mutableListOf<BleConnect.Event<ScannedDevice>>()
+        var closed = false
         val device = ScannedDevice(
             device = mockk(relaxed = true),
             name = "Enduro 2",
@@ -322,7 +334,15 @@ class AndroidConnectCallbackTest {
         val callback = AndroidConnectCallback(
             device = device,
             metrics = metrics,
-            emit = { events += it },
+            channel = object : BleChannel<BleConnect.Event<ScannedDevice>> {
+                override fun emit(a: BleConnect.Event<ScannedDevice>) {
+                    events += a
+                }
+
+                override fun close() {
+                    closed = true
+                }
+            },
             log = NoopLogger,
             sdkInt = sdkInt,
         )

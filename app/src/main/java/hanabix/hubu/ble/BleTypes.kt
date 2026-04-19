@@ -4,35 +4,6 @@ import android.bluetooth.BluetoothDevice
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 
-internal fun interface BleScan<T> {
-    operator fun invoke(metrics: List<BleMetric>): Flow<T>
-}
-
-internal fun interface BleConnect<T> {
-    operator fun invoke(metrics: List<BleMetric>): (T) -> Flow<Event<T>>
-
-    sealed interface Event<out T> {
-        data class Connected(
-            val unsupported: List<BleMetric>,
-        ) : Event<Nothing>
-
-        data class Abandon<T>(
-            val device: T,
-            val unsupported: List<BleMetric>,
-        ) : Event<T>
-
-        data class Notify<T>(
-            val device: T,
-            val meter: BleMeter,
-        ) : Event<T>
-
-        data class Disconnected<T>(
-            val device: T,
-            val cause: String,
-        ) : Event<T>
-    }
-}
-
 internal fun interface BleGather {
     operator fun invoke(metrics: List<BleMetric>): Flow<BleEvent>
 }
