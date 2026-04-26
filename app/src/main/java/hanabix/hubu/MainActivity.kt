@@ -13,15 +13,17 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModelProvider
-import hanabix.hubu.ble.AndroidConnect
-import hanabix.hubu.ble.AndroidScan
-import hanabix.hubu.ble.BleViewModel
-import hanabix.hubu.ble.STATUS_CONNECTING
-import hanabix.hubu.ble.STATUS_TAP_TO_RECONNECT
-import hanabix.hubu.ble.ScannedDeviceBleInfo
+import hanabix.hubu.android.BleConnect
+import hanabix.hubu.android.BleFind
+import hanabix.hubu.android.AndroidLogger
+import hanabix.hubu.model.Gather
 import hanabix.hubu.util.Clock
 import hanabix.hubu.util.HostBattery
-import hanabix.hubu.ui.HUDScreen
+import hanabix.hubu.view.BleViewModel
+import hanabix.hubu.view.HUDScreen
+import hanabix.hubu.view.STATUS_CONNECTING
+import hanabix.hubu.view.STATUS_TAP_TO_RECONNECT
+import kotlin.time.Duration.Companion.seconds
 
 class MainActivity : ComponentActivity() {
     private val tapKeyCodes = setOf(
@@ -38,9 +40,9 @@ class MainActivity : ComponentActivity() {
         object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-                val scanner = AndroidScan(application)
-                val connector = AndroidConnect(application)
-                return BleViewModel(scanner, connector, ScannedDeviceBleInfo) as T
+                val find = BleFind(application, 5.seconds, AndroidLogger)
+                val connect = BleConnect(application, AndroidLogger)
+                return BleViewModel(Gather(find, connect)) as T
             }
         }
     }

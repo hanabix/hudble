@@ -1,4 +1,4 @@
-package hanabix.hubu.ble
+package hanabix.hubu.bluetooth
 
 /**
  * Parses Heart Rate Measurement characteristic data (UUID 0x2A37).

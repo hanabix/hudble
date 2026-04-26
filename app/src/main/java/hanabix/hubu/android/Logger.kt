@@ -1,4 +1,4 @@
-package hanabix.hubu.ble
+package hanabix.hubu.android
 
 import android.util.Log
 

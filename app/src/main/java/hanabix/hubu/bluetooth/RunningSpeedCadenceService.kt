@@ -1,4 +1,4 @@
-package hanabix.hubu.ble
+package hanabix.hubu.bluetooth
 
 /**
  * Represents parsed RSCS (Running Speed and Cadence Service) measurement data.

@@ -1,4 +1,4 @@
-package hanabix.hubu.ble
+package hanabix.hubu.bluetooth
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

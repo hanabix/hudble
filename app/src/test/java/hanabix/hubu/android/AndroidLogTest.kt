@@ -1,4 +1,4 @@
-package hanabix.hubu.ble
+package hanabix.hubu.android
 
 import hanabix.hubu.BuildConfig
 import org.junit.Assert.assertEquals

@@ -1,4 +1,4 @@
-package hanabix.hubu.ui
+package hanabix.hubu.view
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
